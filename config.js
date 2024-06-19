@@ -15,7 +15,7 @@
 const config = {
     db: {
         /* don't expose password or any sensitive info, done only for demo */
-        host: 'localhost',
+        host: '127.0.0.1',
         user: 'appmp_user',
         password: '83ubYKO&_5',
         database: 'app_mp',
