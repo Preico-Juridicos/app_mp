@@ -1,0 +1,44 @@
+<style>
+    .floating-menu {
+        position: fixed;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .color-box {
+        width: 30px;
+        height: 30px;
+        display: inline-block;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="floating-menu">
+    <ul class="list-group">
+        <% sections.forEach(section=> { %>
+
+            <li class="list-group-item d-flex align-items-center" onclick="hilight(<%= section.id %>)" onmouseenter="hilight(<%= section.id %>)" onmouseleave="unhilight()"  style="cursor:pointer;">
+                <div class="color-box" style="background-color: #<%= section.color %>;"></div>
+                <span>
+                    <%= section.price %> €
+                </span>
+            </li>
+            <% }); %>
+    </ul>
+</div>
+
+<script>
+    function hilight(dataId) {
+        $('area[data-section]').mouseleave();
+        $('area[data-section="' + dataId + '"]').mouseenter();
+    }
+
+    function unhilight(){
+        $('area[data-section]').mouseleave();
+    }
+</script>

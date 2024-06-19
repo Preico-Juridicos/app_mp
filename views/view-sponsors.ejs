@@ -1,0 +1,51 @@
+<%- include('partials/header') %>
+
+    <div class="container mt-4">
+        <h2>Lista de Patrocinadores</h2>
+        <table class="table table-striped w-auto">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th class="w-100">Nombre</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <% sponsors.forEach(sponsor=> { %>
+                    <tr>
+                        <td>
+                            <%= sponsor.id %>
+                        </td>
+                        <td>
+                            <%= sponsor.name %>
+                        </td>
+                        <td>
+                        </td>
+                    </tr>
+                    <% }) %>
+                        <tr id="new-sponsor-row">
+                            <td>
+                                <%= nextId %>
+                            </td>
+                            <td>
+                                <input type="text" id="new-sponsor-name" class="bg-transparent border-0 form-control p-0"
+                                    placeholder="Nombre del nuevo patrocinador">
+                            </td>
+                            <td>
+                                <button id="add-sponsor" class="btn btn-primary py-0">Añadir</button>
+                            </td>
+                        </tr>
+            </tbody>
+        </table>
+
+        <!-- <h2>Añadir Patrocinador</h2>
+        <form action="/add-sponsor" method="POST">
+            <div class="mb-3">
+                <label for="name" class="form-label">Nombre del Patrocinador</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Añadir</button>
+        </form> -->
+    </div>
+
+    <%- include('partials/footer') %>
