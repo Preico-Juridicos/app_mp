@@ -6,7 +6,7 @@
                 <map id="latmap" name="latmap"
                     style="position: absolute;left:0;width: -webkit-fill-available;height: -webkit-fill-available;pointer-events: none;z-index:10;">
                     <% positions.forEach(position=> { %>
-                        <% if(position.position_name==="moto-side" ) { %>
+                        <% if(position.position_name==="moto-side") { %>
                             <div>
                                 <area id="area-pos<%= position.id %>" target=""
                                     alt="<%= position.position_name %>-<%= position.id %>"
@@ -26,7 +26,7 @@
                                 <% }); %>
 
                 </map>
-                <img id="mapa-moto-lat" src="/img/moto_side.png" alt="Moto Lateral" usemap="#latmap" width="958px"
+                <img id="mapa-moto-lat" src="/img/moto_side1.png" alt="Moto Lateral" usemap="#latmap" width="958px"
                     height="566px" style="min-width: 958px;min-height: 566px;">
 
             </div>
@@ -35,9 +35,9 @@
             <div class="image-container">
                 <map name="frontmap" id="frontmap"
                     style="position: absolute;left:0;width: -webkit-fill-available;height: -webkit-fill-available;pointer-events: none;z-index:10;">
-
+                    <% console.log(positions) %> 
                     <% positions.forEach(position=> { %>
-                        <% if(position.position_name==="moto-front" ) { %>
+                        <% if(position.position_name==="moto-front") { %>
                             <div>
                                 <area id="area-pos<%= position.id %>" target=""
                                     alt="<%= position.position_name %>-<%= position.id %>"
@@ -56,7 +56,7 @@
                             <% } %>
                                 <% }); %>
                 </map>
-                <img id="mapa-moto-front" src="/img/moto_front.jpg" alt="Moto Frontal" usemap="#frontmap" width="388px"
+                <img id="mapa-moto-front" src="/img/moto_front1.png" alt="Moto Frontal" usemap="#frontmap" width="388px"
                     height="566px" style="min-width: 388px;min-height: 566px;">
                 <!-- Aquí agregarás los huecos interactivos de los patrocinadores -->
             </div>

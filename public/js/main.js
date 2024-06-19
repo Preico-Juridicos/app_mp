@@ -66,27 +66,16 @@
 //         // Agrega más opciones según necesites
 //     });
 // });
+async function fetchSections() {
+    const response = await fetch('/api/sections');
+    const sections = await response.json();
+    return sections;
+}
 
+//  Función para inicializar los colores y efectos de hover
+async function initMapHilight() {
+    const sections = await fetchSections();
 
-$(document).ready(function () {
-    // $('#latmap area').on('dblclick', function () {
-    //     var id = $(this).data('id');
-    //     var position_name = $(this).data('position_name');
-    //     var section = $(this).data('section');
-    //     console.log(section);
-    //     var newText = prompt('Enter new text for ' + id + ' ' + position_name + ' ' + section + ':');
-    //     if (newText) {
-    //         $(this).text(newText);
-    //         // Aquí podrías hacer una llamada AJAX para actualizar el texto en la base de datos si es necesario
-    //     }
-    // });
-
-
-
-
-
-
-    /* Funciones para los colores del mapa de la moto lateral */
     // Inicializa MapHilight Moto Lateral
     $('#mapa-moto-lat').maphilight({
         fillColor: 'ffffff', // Color de relleno base para todas las áreas
@@ -105,95 +94,61 @@ $(document).ready(function () {
         alwaysOn: true
     });
 
-    // Configura los colores y efectos hover para cada clase
-    $('area[data-section="1"]').each(function () {
-        $(this).data('maphilight', {
-            fillColor: 'ffc832f2', 
-            fillOpacity: 0.4,
-            strokeColor: '9cff1d',
-            strokeWidth: 2
+    // Configura los colores para cada clase
+    sections.forEach(section => {
+        $('area[data-section="' + section.id + '"]').each(function () {
+            $(this).data('maphilight', {
+                fillColor: section.color,
+                fillOpacity: 1,
+                strokeColor: '000000',
+                strokeWidth: 2,
+                alwaysOn: true
+            });
         });
     });
 
-    $('area[data-section="2"]').each(function () {
-        $(this).data('maphilight', {
-            fillColor: '4327a2ff', 
-            fillOpacity: 0.4,
-            strokeColor: '9cff1d',
-            strokeWidth: 2
-        });
-    });
-
-    $('area[data-section="3"]').each(function () {
-        $(this).data('maphilight', {
-            fillColor: 'fff6a8ff', 
-            fillOpacity: 0.4,
-            strokeColor: '9cff1d',
-            strokeWidth: 2
-        });
-    });
-
-    $('area[data-section="4"]').each(function () {
-        $(this).data('maphilight', {
-            fillColor: 'ff7800ff', 
-            fillOpacity: 0.4,
-            strokeColor: '9cff1d',
-            strokeWidth: 2
-        });
-    });
-
-    $('area[data-section="5"]').each(function () {
-        $(this).data('maphilight', {
-            fillColor: '00ac49ff', 
-            fillOpacity: 0.4,
-            strokeColor: '9cff1d',
-            strokeWidth: 2
-        });
-    });
-
-    $('area[data-section="6"]').each(function () {
-        $(this).data('maphilight', {
-            fillColor: '00a8ddff', 
-            fillOpacity: 0.4,
-            strokeColor: '9cff1d',
-            strokeWidth: 2
-        });
-    });
-
-    // Reaplica MapHilight después de configurar los datos
+    // Aplica MapHilight después de configurar los datos
     $('#mapa-moto-lat').maphilight();
     $('#mapa-moto-front').maphilight();
 
+    // Configura los efectos de hover
+    $('area').hover(
+        function () {
+            // Almacena los datos originales
+            var original = $(this).data('maphilight');
+            $(this).data('original-maphilight', original);
+
+            // Aplica el color de hover
+            var hover = $.extend({}, original, {
+                fillColor: '9cff1d',
+                fillOpacity: 1
+            });
+            $(this).data('maphilight', hover).trigger('alwaysOn.maphilight');
+        },
+        function () {
+            // Restaura los datos originales
+            var original = $(this).data('original-maphilight');
+            $(this).data('maphilight', original).trigger('alwaysOn.maphilight');
+        }
+    );
+}
 
 
+$(document).ready(function () {
+    
+    // $('#latmap area').on('dblclick', function () {
+    //     var id = $(this).data('id');
+    //     var position_name = $(this).data('position_name');
+    //     var section = $(this).data('section');
+    //     console.log(section);
+    //     var newText = prompt('Enter new text for ' + id + ' ' + position_name + ' ' + section + ':');
+    //     if (newText) {
+    //         $(this).text(newText);
+    //         // Aquí podrías hacer una llamada AJAX para actualizar el texto en la base de datos si es necesario
+    //     }
+    // });
 
-
-
-    // // Para que se ajusten los textos en responsive
-    // function updateTextPositions() {
-    //     var $image = $('#mapa-moto-lat');
-    //     var originalWidth = $image[0].naturalWidth; // Ancho original de la imagen
-    //     var currentWidth = $image.width(); // Ancho actual de la imagen
-
-    //     $('.texto-sponsor').each(function() {
-    //         var $texto = $(this);
-    //         var originalLeft = $texto.data('left');
-    //         var originalTop = $texto.data('top');
-
-    //         // Calcular nuevas posiciones proporcionales
-    //         var newLeft = (originalLeft / originalWidth) * currentWidth;
-    //         var newTop = (originalTop / originalWidth) * currentWidth; // Suponemos que la relación de aspecto se mantiene
-
-    //         $texto.css({
-    //             left: newLeft + 'px',
-    //             top: newTop + 'px'
-    //         });
-    //     });
-    // }
-
-    // updateTextPositions(); // Actualizar posiciones al cargar la página
-
-    // $(window).resize(updateTextPositions); // Actualizar posiciones al redimensionar la ventana
+    initMapHilight();
 });
 
 
