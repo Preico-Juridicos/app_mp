@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test-db": "node /tests/test-connection.js",
+    "test-db": "node tests/test-connection.js",
     "start": "node server.js"
   },
   "keywords": [],

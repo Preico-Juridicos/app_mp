@@ -1,5 +1,5 @@
 // Importar el módulo 'mysql'
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const config = require('../config');
 
 // Configurar los parámetros de conexión a la base de datos
