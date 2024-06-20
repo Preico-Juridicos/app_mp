@@ -40,9 +40,33 @@ async function postSponsor(name) {
         return result;
     } catch (error) {
         console.error(`Error inserting data into sponsors:`, error.message);
-        throw error; // Re-lanzar el error para que el controlador lo maneje
+        throw error;
     }
 }
+
+async function removeSponsor(id) {
+    if (!id) {
+        throw new Error("The 'id' parameter is required");
+    }
+
+    try {
+        const sql = `DELETE FROM sponsors WHERE id = ?`
+        const result = await db.query(sql, [id]);
+
+        return result;
+    } catch (error) {
+        if (error.sqlState == '23000') {
+            const sql = `UPDATE positions SET sponsor_id = null WHERE sponsor_id = ?`;
+            const result = await db.query(sql, [id]);
+            removeSponsor(id);
+        }else{
+            // console.error(error);
+            console.error(`Error removing data into sponsors:`, error.message);
+            throw error;
+        }
+    }
+}
+
 
 
 
@@ -50,5 +74,6 @@ async function postSponsor(name) {
 module.exports = {
     getMultiple,
     getNextID,
-    postSponsor
+    postSponsor,
+    removeSponsor
 }

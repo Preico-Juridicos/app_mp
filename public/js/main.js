@@ -180,11 +180,13 @@ $(document).ready(function () {
         $('#sponsorModal').modal('show');
     });
 
+    /* Funcionalidades de las posiciones "index" */
+
+    // Permite añadir  sponsors tanto si se hace click en la posicion en especifico, como si se hace en el area general, si se hace en el area general verifica las posiciones relacionadas entre imagenes
     $('#saveSponsor').on('click', function () {
         var sponsorId = $('#sponsorSelect').val();
         var sponsorName = $('#sponsorSelect option:selected').text();
 
-        // Función para realizar la llamada AJAX
         function updateSponsor(area) {
             $.ajax({
                 url: '/update-position-sponsor',
@@ -194,7 +196,6 @@ $(document).ready(function () {
                     sponsor_id: sponsorId
                 },
                 success: function (response) {
-                    console.log('Patrocinador actualizado');
                     area.text(sponsorName);
                     location.reload();
 
@@ -214,13 +215,11 @@ $(document).ready(function () {
 
             if (sectionId) {
                 if (hasChilds) {
-                    // Si la sección tiene hijos, actualiza todos los hijos
                     $('area[data-id="' + parentId + '"],area[data-parent-id="' + parentId + '"]').each(function () {
                         updateSponsor($(this));
                         location.reload();
                     });
                 } else {
-                    // Si la sección no tiene hijos, actualiza toda la sección
                     $('area[data-section="' + sectionId + '"]').each(function () {
                         updateSponsor($(this));
                         location.reload();
@@ -228,15 +227,60 @@ $(document).ready(function () {
                 }
             }
         }
-        // Recarga la página para reflejar los cambios
         location.reload();
-
-        // Cierra el modal
         $('#sponsorModal').modal('hide');
 
     });
 
-    // Manejador para añadir un nuevo patrocinador
+    // Permite eliminar sponsors tanto si se hace click en la posicion en especifico, como si se hace en el area general, si se hace en el area general verifica las posiciones relacionadas entre imagenes
+    $('#removeSponsor').on('click', function () {
+        function removeSponsor(area) {
+            $.ajax({
+                url: '/remove-position-sponsor',
+                method: 'POST',
+                data: {
+                    id: area.data('id'),
+                },
+                success: function (response) {
+                    area.text('');
+                    location.reload();
+                },
+                error: function (error) {
+                    console.error('Error al eliminar el patrocinador', error);
+                }
+            });
+        }
+
+        if (currentArea) {
+            removeSponsor(currentArea);
+        } else {
+            const sectionId = $(this).data('section-id');
+            const hasChilds = $(this).data('childs');
+            const parentId = $(this).data('parent-id');
+
+            if (sectionId) {
+                if (hasChilds) {
+                    $('area[data-id="' + parentId + '"],area[data-parent-id="' + parentId + '"]').each(function () {
+                        removeSponsor($(this));
+                        location.reload();
+                    });
+                } else {
+                    $('area[data-section="' + sectionId + '"]').each(function () {
+                        removeSponsor($(this));
+                        location.reload();
+                    });
+                }
+
+            }
+        }
+        location.reload();
+        $('#sponsorModal').modal('hide');
+    });
+
+
+    /* Funcionalidades de los sponsors "view-sponsors" */
+
+    // Para añadir un nuevo patrocinador
     $('#add-sponsor').on('click', function () {
         createSponsor($('#new-sponsor-name').val());
     });
@@ -258,7 +302,6 @@ $(document).ready(function () {
                 method: 'POST',
                 data: { name: name },
                 success: function (response) {
-                    // Recargar la página para reflejar los cambios o actualizar la tabla dinámicamente
                     location.reload();
                 },
                 error: function (error) {
@@ -270,50 +313,24 @@ $(document).ready(function () {
         }
     }
 
-    $('#removeSponsor').on('click', function () {
-        // Función para realizar la llamada AJAX de eliminación
-        function removeSponsor(area) {
+    // Para eliminar un patrocinador
+    $('[name="remove-sponsor-form-db"]').on('click', function (e) {
+        removeSponsor($(this).data('id'));
+    });
+
+    function removeSponsor(id) {
+        if (id !== '') {
             $.ajax({
-                url: '/remove-position-sponsor',
+                url: '/remove-sponsor',
                 method: 'POST',
-                data: {
-                    id: area.data('id'),
-                },
+                data: { id: id },
                 success: function (response) {
-                    // console.log('Patrocinador eliminado');
-                    area.text(''); // Limpiar el texto del área si se elimina el patrocinador
-                    location.reload(); // Recargar la página para reflejar los cambios
+                    location.reload();
                 },
                 error: function (error) {
-                    console.error('Error al eliminar el patrocinador', error);
+                    console.error('Error al añadir el patrocinador', error);
                 }
             });
         }
-
-        if (currentArea) {
-            removeSponsor(currentArea);
-        } else {
-            const sectionId = $(this).data('section-id');
-            const hasChilds = $(this).data('childs');
-            const parentId = $(this).data('parent-id');
-
-            if (sectionId) {
-                if (hasChilds) {
-                    $('area[data-id="' + parentId + '"],area[data-parent-id="' + parentId + '"]').each(function () {
-                        removeSponsor($(this));
-                    });
-                } else {
-                    $('area[data-section="' + sectionId + '"]').each(function () {
-                        removeSponsor($(this));
-                    });
-                }
-
-            }
-        }
-        // Recargar la página para reflejar los cambios
-        location.reload();
-
-        // Cierra el modal
-        $('#sponsorModal').modal('hide');
-    });
+    }
 });
