@@ -18,27 +18,93 @@
     }
 </style>
 
+
 <div class="floating-menu">
     <ul class="list-group">
         <% sections.forEach(section=> { %>
-
-            <li class="list-group-item d-flex align-items-center" onclick="hilight(<%= section.id %>)" onmouseenter="hilight(<%= section.id %>)" onmouseleave="unhilight()"  style="cursor:pointer;">
+            <li class="list-group-item d-flex align-items-center" onclick="showDropdown(event, <%= section.id %>)"
+                ondblclick="addSponsorToSection(<%= section.id %>)" style="cursor:pointer;">
                 <div class="color-box" style="background-color: #<%= section.color %>;"></div>
                 <span>
                     <%= section.price %> €
                 </span>
+                <!-- Dropdown container -->
+                <div class="dropdown d-none" id="dropdown-<%= section.id %>" style="top: -23px;left: 16px;">
+                    <ul class="dropdown-menu show">
+                        <% positions.filter(pos=> pos.section === section.id &&
+                            !pos.position_parent_id).forEach(position => { %>
+                            <li>
+                                <a class="dropdown-item align-items-center d-inline-flex dropdown-item" href="#"
+                                    data-position-id="<%= position.id %>" data-position-parent-id="<%= position.position_parent_id %>"" data-childs=true
+                                    onclick="addSponsorToSection(<%= section.id %>,<%= position.id %>,true)">
+                                    <div class="color-box" style="background-color: #<%= section.color %>;"></div>
+                                    <span>Posición <%= position.id %></span>
+                                </a>
+                            </li>
+                            <% }); %>
+                    </ul>
+                </div>
             </li>
             <% }); %>
     </ul>
 </div>
 
 <script>
+    function showDropdown(event, sectionId) {
+        event.stopPropagation();
+
+        $('.dropdown').addClass('d-none');
+
+        const dropdown = $('#dropdown-' + sectionId);
+        if (dropdown.hasClass('d-none')) {
+            dropdown.removeClass('d-none');
+        } else {
+            dropdown.addClass('d-none');
+        }
+    }
+
     function hilight(dataId) {
         $('area[data-section]').mouseleave();
         $('area[data-section="' + dataId + '"]').mouseenter();
     }
 
-    function unhilight(){
+    function unhilight() {
         $('area[data-section]').mouseleave();
     }
+
+    function addSponsorToSection(sectionId,parentId = null, childs = false) {
+        // Show the modal for selecting sponsor
+        $('#sponsorModal').modal('show');
+
+        // Save the sectionId to use it later when saving the sponsor
+        $('#saveSponsor').data({ 'section-id': sectionId, 'childs': childs , 'parent-id': parentId });
+        $('#removeSponsor').data({ 'section-id': sectionId, 'childs': childs, 'parent-id': parentId  });
+    }
+
+    function hilightPosition(positionId) {
+        $('area[data-id="' + positionId + '"]').mouseenter();
+        $('area[data-parent-id="' + positionId + '"]').mouseenter();
+    }
+
+    function unhilightPosition() {
+        $('area[data-id]').mouseleave();
+        $('area[data-parent-id]').mouseleave();
+    }
+
+    $(document).ready(function () {
+        // Close any open dropdowns when clicking outside of them
+        $(document).on('click', function (event) {
+            if (!$(event.target).closest('.list-group-item').length) {
+                $('.dropdown').addClass('d-none');
+            }
+        });
+
+        // Hover effect for dropdown items
+        $('.dropdown-item').on('mouseenter', function () {
+            const positionId = $(this).data('position-id');
+            hilightPosition(positionId);
+        }).on('mouseleave', function () {
+            unhilightPosition();
+        });
+    });
 </script>

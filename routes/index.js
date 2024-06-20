@@ -49,6 +49,22 @@ router.post('/add-sponsor', async function (req, res, next) {
     }
 });
 
+router.post('/remove-sponsor', async function (req, res, next) {
+    try {
+        const { id } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ error: "The 'id' field is required" });
+        }
+
+        const result = await sponsors.removeSponsor(id);
+
+        return res.redirect('/view-sponsors');
+    } catch (err) {
+        console.error(`Error while posting data `, err.message);
+        return next(err); // Pasar el error al siguiente middleware de manejo de errores
+    }
+});
 
 
 router.post('/update-position-sponsor', async function (req, res, next) {
