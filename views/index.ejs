@@ -10,7 +10,7 @@
                             <div>
                                 <area id="area-pos<%= position.id %>" target=""
                                     alt="<%= position.position_name %>-<%= position.id %>"
-                                    title="<%= position.position_name %>-<%= position.id %>"
+                                    title="<%= position.position_name %>-<%= position.id %>" data-parent-id="<%= position.position_parent_id %>"
                                     data-id="<%= position.id %>" data-position_name="<%= position.position_name %>"
                                     data-section="<%= position.section %>" coords="<%= position.coords %>" shape="poly"
                                     class="overlay section<%= position.id %>" data-color="" />
@@ -35,13 +35,12 @@
             <div class="image-container">
                 <map name="frontmap" id="frontmap"
                     style="position: absolute;left:0;width: -webkit-fill-available;height: -webkit-fill-available;pointer-events: none;z-index:10;">
-                    <% console.log(positions) %> 
                     <% positions.forEach(position=> { %>
                         <% if(position.position_name==="moto-front") { %>
                             <div>
                                 <area id="area-pos<%= position.id %>" target=""
                                     alt="<%= position.position_name %>-<%= position.id %>"
-                                    title="<%= position.position_name %>-<%= position.id %>"
+                                    title="<%= position.position_name %>-<%= position.id %>" data-parent-id="<%= position.position_parent_id %>"
                                     data-id="<%= position.id %>" data-position_name="<%= position.position_name %>"
                                     data-section="<%= position.section %>" coords="<%= position.coords %>" shape="poly"
                                     class="overlay section<%= position.id %>" data-color="" />

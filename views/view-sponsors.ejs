@@ -5,28 +5,22 @@
         <table class="table table-striped w-auto">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th class="w-100">Nombre</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <% sponsors.forEach(sponsor=> { %>
-                    <tr>
-                        <td>
-                            <%= sponsor.id %>
-                        </td>
+                    <tr data-id="<%= sponsor.id %>">
                         <td>
                             <%= sponsor.name %>
                         </td>
                         <td>
+                            <button id="remove-sponsor" class="btn btn-danger py-0">Eliminar</button>
                         </td>
                     </tr>
                     <% }) %>
-                        <tr id="new-sponsor-row">
-                            <td>
-                                <%= nextId %>
-                            </td>
+                        <tr id="new-sponsor-row" data-id="<%= nextId %>">
                             <td>
                                 <input type="text" id="new-sponsor-name"
                                     class="bg-transparent border-0 form-control p-0"

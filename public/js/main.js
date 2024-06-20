@@ -135,7 +135,7 @@ async function initMapHilight() {
 
 
 $(document).ready(function () {
-    
+
     // $('#latmap area').on('dblclick', function () {
     //     var id = $(this).data('id');
     //     var position_name = $(this).data('position_name');
@@ -166,7 +166,7 @@ $(document).ready(function () {
         var id = $(this).data('id');
         var position_name = $(this).data('position_name');
         var section = $(this).data('section');
-        console.log(section);
+        // console.log(section);
         $('#sponsorModal').modal('show');
     });
 
@@ -176,42 +176,64 @@ $(document).ready(function () {
         var id = $(this).data('id');
         var position_name = $(this).data('position_name');
         var section = $(this).data('section');
-        console.log(section);
+        // console.log(section);
         $('#sponsorModal').modal('show');
     });
 
     $('#saveSponsor').on('click', function () {
         var sponsorId = $('#sponsorSelect').val();
         var sponsorName = $('#sponsorSelect option:selected').text();
-        if (currentArea) {
-            // Actualiza el texto del área con el nombre del patrocinador
-            currentArea.text(sponsorName);
 
-            // Aquí puedes hacer una llamada AJAX para actualizar el patrocinador en la base de datos
+        // Función para realizar la llamada AJAX
+        function updateSponsor(area) {
             $.ajax({
                 url: '/update-position-sponsor',
                 method: 'POST',
                 data: {
-                    id: currentArea.data('id'),
+                    id: area.data('id'),
                     sponsor_id: sponsorId
                 },
                 success: function (response) {
                     console.log('Patrocinador actualizado');
-                    // // Actualiza el texto del área con el nombre del patrocinador
-                    // currentArea.data('sponsor', );
-                    currentText.text(sponsorName.trim())
-                    // // Muestra el nombre del patrocinador en el área (podría ser en una etiqueta, tooltip, etc.)
-                    // currentArea.attr('title', sponsorName);  // ejemplo para tooltip
-                    // console.log(currentText.text());
+                    area.text(sponsorName);
+                    location.reload();
+
                 },
                 error: function (error) {
                     console.error('Error al actualizar el patrocinador', error);
                 }
             });
-
-            // Cierra el modal
-            $('#sponsorModal').modal('hide');
         }
+
+        if (currentArea) {
+            updateSponsor(currentArea);
+        } else {
+            const sectionId = $(this).data('section-id');
+            const hasChilds = $(this).data('childs');
+            const parentId = $(this).data('parent-id');
+
+            if (sectionId) {
+                if (hasChilds) {
+                    // Si la sección tiene hijos, actualiza todos los hijos
+                    $('area[data-id="' + parentId + '"],area[data-parent-id="' + parentId + '"]').each(function () {
+                        updateSponsor($(this));
+                        location.reload();
+                    });
+                } else {
+                    // Si la sección no tiene hijos, actualiza toda la sección
+                    $('area[data-section="' + sectionId + '"]').each(function () {
+                        updateSponsor($(this));
+                        location.reload();
+                    });
+                }
+            }
+        }
+        // Recarga la página para reflejar los cambios
+        location.reload();
+
+        // Cierra el modal
+        $('#sponsorModal').modal('hide');
+
     });
 
     // Manejador para añadir un nuevo patrocinador
@@ -249,31 +271,49 @@ $(document).ready(function () {
     }
 
     $('#removeSponsor').on('click', function () {
-        var sponsorId = $('#sponsorSelect').val();
-        var sponsorName = $('#sponsorSelect option:selected').text();
-        if (currentArea) {
-            // Actualiza el texto del área con el nombre del patrocinador
-            currentArea.text(sponsorName);
-
-            // Aquí puedes hacer una llamada AJAX para actualizar el patrocinador en la base de datos
+        // Función para realizar la llamada AJAX de eliminación
+        function removeSponsor(area) {
             $.ajax({
                 url: '/remove-position-sponsor',
                 method: 'POST',
                 data: {
-                    id: currentArea.data('id'),
+                    id: area.data('id'),
                 },
                 success: function (response) {
-                    console.log('Patrocinador eliminado');
-                    currentText.text('')
-
+                    // console.log('Patrocinador eliminado');
+                    area.text(''); // Limpiar el texto del área si se elimina el patrocinador
+                    location.reload(); // Recargar la página para reflejar los cambios
                 },
                 error: function (error) {
                     console.error('Error al eliminar el patrocinador', error);
                 }
             });
-
-            // Cierra el modal
-            $('#sponsorModal').modal('hide');
         }
+
+        if (currentArea) {
+            removeSponsor(currentArea);
+        } else {
+            const sectionId = $(this).data('section-id');
+            const hasChilds = $(this).data('childs');
+            const parentId = $(this).data('parent-id');
+
+            if (sectionId) {
+                if (hasChilds) {
+                    $('area[data-id="' + parentId + '"],area[data-parent-id="' + parentId + '"]').each(function () {
+                        removeSponsor($(this));
+                    });
+                } else {
+                    $('area[data-section="' + sectionId + '"]').each(function () {
+                        removeSponsor($(this));
+                    });
+                }
+
+            }
+        }
+        // Recargar la página para reflejar los cambios
+        location.reload();
+
+        // Cierra el modal
+        $('#sponsorModal').modal('hide');
     });
 });
