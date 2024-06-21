@@ -31,7 +31,7 @@ router.get('/truck', async function (req, res, next) {
 });
 router.get('/helmet', async function (req, res, next) {
     try {
-        const sectionsData = await sections.getMultiple(req.query.page);
+        const sectionsData = await sections.getMultipleByType('helmet' , req.query.page);
         const sponsorsData = await sponsors.getMultiple(req.query.page);
         const positionsData = await positions.getMultiple(req.query.page);
 
@@ -43,7 +43,7 @@ router.get('/helmet', async function (req, res, next) {
 });
 router.get('/suit', async function (req, res, next) {
     try {
-        const sectionsData = await sections.getMultiple(req.query.page);
+        const sectionsData = await sections.getMultipleByType('suit' , req.query.page);
         const sponsorsData = await sponsors.getMultiple(req.query.page);
         const positionsData = await positions.getMultiple(req.query.page);
 
