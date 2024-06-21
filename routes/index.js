@@ -7,11 +7,11 @@ const positions = require('../services/positions');
 // Paginas
 router.get('/', async function (req, res, next) {
     try {
-        const sectionsData = await sections.getMultiple(req.query.page);
+        const sectionsData = await sections.getMultipleByType('bike', req.query.page);
         const sponsorsData = await sponsors.getMultiple(req.query.page);
         const positionsData = await positions.getMultiple(req.query.page);
 
-        res.render('index', { sections: sectionsData.data, sponsors: sponsorsData.data, positions: positionsData.data });
+        res.render('index', { currentRoute: '/', sections: sectionsData.data, sponsors: sponsorsData.data, positions: positionsData.data, type: 'bike', imgId: 'bike' });
     } catch (err) {
         console.error(`Error while getting data `, err.message);
         next(err);
@@ -19,11 +19,11 @@ router.get('/', async function (req, res, next) {
 });
 router.get('/truck', async function (req, res, next) {
     try {
-        const sectionsData = await sections.getMultipleTruck(req.query.page);
+        const sectionsData = await sections.getMultipleByType('truck', req.query.page);
         const sponsorsData = await sponsors.getMultiple(req.query.page);
         const positionsData = await positions.getMultiple(req.query.page);
 
-        res.render('truck', { sections: sectionsData.data, sponsors: sponsorsData.data, positions: positionsData.data, type: 'truck' });
+        res.render('truck', { currentRoute: '/truck', sections: sectionsData.data, sponsors: sponsorsData.data, positions: positionsData.data, type: 'truck' });
     } catch (err) {
         console.error(`Error while getting data `, err.message);
         next(err);
@@ -35,7 +35,7 @@ router.get('/helmet', async function (req, res, next) {
         const sponsorsData = await sponsors.getMultiple(req.query.page);
         const positionsData = await positions.getMultiple(req.query.page);
 
-        res.render('helmet', { sections: sectionsData.data, sponsors: sponsorsData.data, positions: positionsData.data });
+        res.render('helmet', { currentRoute: '/helmet', sections: sectionsData.data, sponsors: sponsorsData.data, positions: positionsData.data, type: 'helmet', imgId: 'helmet' });
     } catch (err) {
         console.error(`Error while getting data `, err.message);
         next(err);
@@ -47,7 +47,7 @@ router.get('/suit', async function (req, res, next) {
         const sponsorsData = await sponsors.getMultiple(req.query.page);
         const positionsData = await positions.getMultiple(req.query.page);
 
-        res.render('suit', { sections: sectionsData.data, sponsors: sponsorsData.data, positions: positionsData.data });
+        res.render('suit', { currentRoute: '/suit', sections: sectionsData.data, sponsors: sponsorsData.data, positions: positionsData.data, type: 'suit', imgId: 'suit' });
     } catch (err) {
         console.error(`Error while getting data `, err.message);
         next(err);
@@ -59,7 +59,7 @@ router.get('/view-sponsors', async function (req, res, next) {
 
         const nextIDData = await sponsors.getNextID(req.query.page);
 
-        res.render('view-sponsors', { sponsors: sponsorsData.data, nextId: nextIDData.data[0].AUTO_INCREMENT });
+        res.render('view-sponsors', { currentRoute: '/view-sponsors', sponsors: sponsorsData.data, nextId: nextIDData.data[0].AUTO_INCREMENT });
     } catch (err) {
         console.error(`Error while getting data `, err.message);
         next(err);
