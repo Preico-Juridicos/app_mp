@@ -44,6 +44,7 @@ async function postSponsor(name) {
     }
 }
 
+
 async function removeSponsor(id) {
     if (!id) {
         throw new Error("The 'id' parameter is required");

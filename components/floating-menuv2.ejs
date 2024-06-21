@@ -1,0 +1,368 @@
+<style>
+    .floating-menu {
+        position: fixed;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .color-box {
+        width: 30px;
+        height: 30px;
+        display: inline-block;
+        margin-right: 10px;
+    }
+
+    .menu-header {
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+        background-color: #f8f9fa;
+    }
+
+    .menu-header h5 {
+        margin: 0;
+    }
+
+    .menu-header .btn {
+        margin-left: auto;
+    }
+</style>
+
+
+<div class="floating-menu">
+    <div class="menu-header d-flex align-items-center justify-content-between">
+        <h5>Patrocinadores</h5>
+        <!-- <button class="btn btn-primary btn-sm mx-1" onclick="showAddSponsorModal(<%= type %>)"><i class='fas fa-plus'
+                style='font-size:20px'></i> </button> -->
+        <button class="btn btn-primary btn-sm mx-2" onclick="addTempSponsorItem('<%= type %>')"><i class='fas fa-plus'
+                style='font-size:20px'></i></button>
+
+    </div>
+    <ul class="list-group" id="sponsorList" data-type="<%= type %>">
+        <% sections.forEach(section=> { %>
+            <li class="list-group-item d-flex align-items-center" onclick="showDropdown(event, <%= section.id %>)"
+                ondblclick="addSponsorToSection(<%= section.id %>)" style="cursor:pointer;">
+                <div class="color-box" style="background-color: #<%= section.color %>;"></div>
+                <span>
+                    <%= section.price %> €
+                </span>
+                <button class="btn btn-danger btn-sm mx-2" onclick="removeSection('<%= section.id %>')"><i
+                        class='fas fa-x' style='font-size:20px'></i></button>
+                <!-- Dropdown container -->
+                <div class="dropdown d-none" id="dropdown-<%= section.id %>" data-id="<%= section.id %>"
+                    style="top: -23px;left: 16px;">
+                    <ul class="dropdown-menu show">
+                        <li>
+                            <a class="dropdown-item align-items-center d-inline-flex dropdown-item" href="#"
+                                data-section="<%= section.id %>" onclick="addTempPositionItem('<%= section.id %>')">
+                                <span class="mx-2">Añadir Posción</span>
+                                <i class='fas fa-plus' style='font-size:20px'></i>
+                            </a>
+                        </li>
+                        <% positions.filter(pos=> pos.section === section.id &&
+                            !pos.position_parent_id).forEach(position => { %>
+                            <li class="d-flex">
+                                <a class="dropdown-item align-items-center d-inline-flex dropdown-item" href="#"
+                                    data-position-id="<%= position.id %>"
+                                    data-position-parent-id="<%= position.position_parent_id %>"" data-childs=true
+                                    onclick=" addSponsorToSection(<%=section.id %>,<%= position.id %>,true)">
+                                        <div class="color-box" style="background-color: #<%= section.color %>;"></div>
+                                        <% if(position.sponsor_id !== null){ %>
+                                            <% const sponsor = sponsors.find(sponsor => sponsor.id === position.sponsor_id); %>
+                                            <% if (sponsor) { %>
+                                                <span><%= sponsor.name %></span>
+                                            <% } else { %>
+                                                <span>Sponsor no encontrado para el ID <%= position.sponsor_id %></span>
+                                            <% } %>
+                                        <%} else { %>
+                                            <span>Posición <%= position.id %></span>
+                                        <%} %>
+                                </a>
+                                <button class="btn btn-danger btn-sm mx-2"
+                                    onclick="removePosition('<%= position.id %>')"><i class='fas fa-x'
+                                        style='font-size:20px'></i></button>
+                                <!-- <button class="btn btn-danger btn-sm mx-0" onclick="removePosition('<%= position.id %>')"><i
+                                        class='fas fa-x' style='font-size:20px'></i></button> -->
+                            </li>
+                            <% }); %>
+                    </ul>
+                </div>
+            </li>
+            <% }); %>
+    </ul>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="addPositionModal" tabindex="-1" role="dialog" aria-labelledby="addPositionModalLabel"
+    data-bs-backdrop="false" data-bs-keyboard="false" style="height:145px;" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document" style=" position: fixed;top: 20%;left: 0;margin: 0;">
+        <div class="modal-content">
+            <div class="align-items-center d-flex justify-content-between modal-body">
+                <span>Añade los puntos.</span>
+                <button id="generateCodeButton" type="button" class="btn btn-secondary" data-dismiss="modal"
+                    onclick="endAddTempPositionItem()">Finalizar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    /*
+    * Secciones
+    */
+    function removeSection(id) {
+        if (!id) {
+            return;
+        }
+
+        $.ajax({
+            url: '/remove-section',
+            method: 'POST',
+            data: { id: id },
+            success: function (response) {
+                location.reload();
+            },
+            error: function (error) {
+                console.error('Error al eliminar la sección', error);
+            }
+        });
+    }
+    function addSection(type) {
+        // Lógica para añadir un nuevo patrocinador
+        console.log("Añadir nueva seccion");
+
+        if (type.trim() !== '') {
+            $.ajax({
+                url: '/add-section',
+                method: 'POST',
+                data: { name: name },
+                success: function (response) {
+                    location.reload();
+                },
+                error: function (error) {
+                    console.error('Error al añadir el patrocinador', error);
+                }
+            });
+        } else {
+            alert('Por favor, ingrese un nombre para el nuevo patrocinador.');
+        }
+    }
+    function addTempSponsorItem(type) {
+        if (!$('#tempSponsorColor').length) {
+            var tempItem = $('<li>', {
+                class: 'list-group-item d-flex align-items-center',
+                html: `
+                    <div>
+                        <input type="color" class="form-control m-0 p-0" id="tempSponsorColor" required style="border: none;border-radius: 4px;width: 30px;height: 30px;cursor: pointer;">
+                    </div>
+                    <div>
+                        <input type="text" class="form-control form-control m-2 p-1" id="tempSponsorPrice" placeholder="Precio" required>
+                    </div>
+                    <button class="btn btn-success btn-sm mx-3" onclick="saveNewSponsor()"><i class='fas fa-check' style='font-size:20px'></i></button>
+                    <button class="btn btn-danger btn-sm mx-0" onclick="removeTempSponsorItem(this)"><i class='fas fa-x' style='font-size:20px'></i></button>
+                `
+            });
+
+            if ($('#sponsorList').children().length > 0) {
+                $('#sponsorList').prepend(tempItem);
+            } else {
+                $('#sponsorList').append(tempItem);
+            }
+        }
+
+    }
+    function removeTempSponsorItem(button) {
+        var tempItem = button.closest('li');
+        tempItem.remove();
+    }
+    function saveNewSponsor() {
+        var color = $('#tempSponsorColor').val().replace('#', '');
+        var price = $('#tempSponsorPrice').val();
+        var type = $('#sponsorList').data('type');
+
+        console.log(price);
+        console.log(color);
+        console.log(type);
+        $.ajax({
+            url: '/add-section',
+            method: 'POST',
+            data: {
+                color: color,
+                price: price,
+                type: type
+
+            },
+            success: function (response) {
+                location.reload();
+            },
+            error: function (error) {
+                console.error("Error al añadir patrocinador", error);
+            }
+        });
+    }
+
+    /*
+    * Posiciones, mapeo de imagen añadido desde script externo
+    */
+    var mapImage = null;
+    var mapImageContainer = null;
+    var generateCodeButton = null;
+    let points = [];
+    let textLeft = null;
+    let textTop = null;
+    let currentSectionId = null;
+    var currentPositionName = null;
+
+    function addTempPositionItem(sectionId) {
+        $('#addPositionModal').modal('show');
+        $('body').css({
+            overflow: 'auto',
+            overflowX: 'scroll'
+        });
+        points = [];
+        currentSectionId = sectionId;
+
+        $('img').on('click', function (event) {
+            mapImage = $(this);
+            mapImageContainer = $(this).closest('.image-container');
+            var generateCodeButton = $('#generateCodeButton');
+
+            mapImage.off('click');
+            mapImage.on('click', function (event) {
+                currentPositionName = mapImage.data("img");
+                const rect = document.getElementById($(mapImage).attr('id')).getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                if (textLeft == null) {
+                    textLeft = x;
+                    textTop = y;
+                }
+                points.push(`${x},${y}`);
+                //updateArea();
+                addPointMarker(x, y);
+
+            });
+
+            //console.log(mapImage);
+            //console.log(mapImageContainer);
+        });
+
+
+    }
+    function endAddTempPositionItem() {
+        $('#addPositionModal').modal('hide');
+        //console.log(points);
+        //console.log(currentSectionId);
+        //console.log(currentPositionName);
+
+        $.ajax({
+            url: '/add-position',
+            method: 'POST',
+            data: {
+                position_name: currentPositionName,
+                section: currentSectionId,
+                coords: points.join(','),
+                left: textLeft,
+                top: textTop
+
+            },
+            success: function (response) {
+                location.reload();
+            },
+            error: function (error) {
+                console.error("Error al añadir posicion", error);
+            }
+        });
+    }
+    function removePosition(id) {
+        if (!id) {
+            return;
+        }
+
+        $.ajax({
+            url: '/remove-position',
+            method: 'POST',
+            data: { id: id },
+            success: function (response) {
+                location.reload();
+            },
+            error: function (error) {
+                console.error('Error al eliminar la posicion', error);
+            }
+        });
+    }
+
+
+
+
+
+
+
+    $(document).ready(function () {
+        // Close any open dropdowns when clicking outside of them
+        $(document).on('click', function (event) {
+            if (!$(event.target).closest('.list-group-item').length) {
+                $('.dropdown').addClass('d-none');
+            }
+        });
+
+        // Hover effect for dropdown items
+        $('.dropdown-item').on('mouseenter', function () {
+            const positionId = $(this).data('position-id');
+            hilightPosition(positionId);
+        }).on('mouseleave', function () {
+            unhilightPosition();
+        });
+
+        //let observer = new MutationObserver((mutations) => {
+        //    mutations.forEach((mutation) => {
+        //        if (!mutation.addedNodes) return
+        //
+        //        for (let i = 0; i < mutation.addedNodes.length; i++) {
+        //            // do things to your newly added nodes here
+        //            let node = mutation.addedNodes[i];
+        //            if (node.attributes.usemap) {
+        //                $(node).off('click');
+        //                $(node).on('click', function (event) {
+        //                    mapImage = $(this);
+        //                    mapImageContainer = $(this).closest('.image-container');
+        //                    var generateCodeButton = $('#generateCodeButton');
+        //
+        //                    mapImage.off('click');
+        //                    mapImage.on('click', function (event) {
+        //                        currentPositionName = mapImage.data("img");
+        //                        const rect = document.getElementById($(mapImage).attr('id')).getBoundingClientRect();
+        //                        const x = event.clientX - rect.left;
+        //                        const y = event.clientY - rect.top;
+        //                        points.push(`${x},${y}`);
+        //                        //updateArea();
+        //                        addPointMarker(x, y);
+        //
+        //                    });
+        //
+        //                    //console.log(mapImage);
+        //                    //console.log(mapImageContainer);
+        //                });
+        //            }
+        //        }
+        //    })
+        //})
+        //
+        //observer.observe(document.body, {
+        //    childList: true
+        //    , subtree: true
+        //    , attributes: false
+        //    , characterData: false
+        //})
+
+
+
+    });
+</script>
+<script src="/js/img-map-generator.js"></script>
+<link rel="stylesheet" href="/css/img-map-generator.css">

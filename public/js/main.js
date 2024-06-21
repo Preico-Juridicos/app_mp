@@ -1,3 +1,4 @@
+
 // JavaScript para la interactividad de los huecos de patrocinadores
 // document.addEventListener('DOMContentLoaded', function () {
 //     // Agregar eventos de click y doble click para los huecos de patrocinadores
@@ -334,3 +335,63 @@ $(document).ready(function () {
         }
     }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function showDropdown(event, sectionId) {
+    event.stopPropagation();
+
+    $('.dropdown').addClass('d-none');
+
+    const dropdown = $('#dropdown-' + sectionId);
+    if (dropdown.hasClass('d-none')) {
+        dropdown.removeClass('d-none');
+    } else {
+        dropdown.addClass('d-none');
+    }
+}
+
+function hilight(dataId) {
+    $('area[data-section]').mouseleave();
+    $('area[data-section="' + dataId + '"]').mouseenter();
+}
+
+function unhilight() {
+    $('area[data-section]').mouseleave();
+}
+
+function addSponsorToSection(sectionId, parentId = null, childs = false) {
+    // Show the modal for selecting sponsor
+    $('#sponsorModal').modal('show');
+
+    // Save the sectionId to use it later when saving the sponsor
+    $('#saveSponsor').data({ 'section-id': sectionId, 'childs': childs, 'parent-id': parentId });
+    $('#removeSponsor').data({ 'section-id': sectionId, 'childs': childs, 'parent-id': parentId });
+}
+
+function hilightPosition(positionId) {
+    $('area[data-id="' + positionId + '"]').mouseenter();
+    $('area[data-parent-id="' + positionId + '"]').mouseenter();
+}
+
+function unhilightPosition() {
+    $('area[data-id]').mouseleave();
+    $('area[data-parent-id]').mouseleave();
+}
