@@ -1,0 +1,33 @@
+#map-image-container {
+    position: relative;
+}
+
+#map-image {
+    cursor: crosshair;
+    max-width: 100%;
+    height: auto;
+}
+
+#code-output {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 300px;
+    overflow: auto;
+}
+
+#points-output {
+    margin-top: 20px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 100px;
+    overflow: auto;
+}
+
+.point {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: red;
+}
