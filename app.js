@@ -4,12 +4,24 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var basicAuth = require('basic-auth');
 
 const indexRouter = require('./routes/index');
 const sectionsRouter = require('./routes/sections');
 
 var app = express();
 
+
+// Autenticación básica
+const auth = function (req, res, next) {
+    var user = basicAuth(req);
+
+    if (!user || user.name !== 'prtadmin' || user.pass !== '2024d@vid!') {
+        res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+        return res.status(401).send();
+    }
+    next();
+};
 
 
 // view engine setup
@@ -22,6 +34,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Aplicar autenticación básica para todas las rutas
+app.use(auth);
 
 app.use('/', indexRouter);
 app.use('/api/sections', sectionsRouter);
