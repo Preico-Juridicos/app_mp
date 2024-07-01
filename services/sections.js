@@ -66,12 +66,12 @@ async function removeSection(id) {
         const sql = `DELETE FROM sections WHERE id = ?`
         const result = await db.query(sql, [id]);
 
-        const sql2 = `DELETE FROM positions WHERE section = ?`;
-        const result2 = await db.query(sql2, [id]);
+        // const sql2 = `DELETE FROM positions WHERE section = ?`;
+        // const result2 = await db.query(sql2, [id]);
 
         return result2;
     } catch (error) {
-        console.log(error);
+        // console.log(error);
         if (error.sqlState == '23000') {
             const sql = `DELETE FROM positions WHERE section = ?`;
             const result = await db.query(sql, [id]);

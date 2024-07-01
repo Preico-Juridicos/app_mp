@@ -31,30 +31,26 @@ async function getMultiple(page = 1) {
 }
 
 
-async function postPosition(position_name, section, coords, left, top) {
-    if (!position_name) {
-        return res.status(400).json({ error: "The 'position_name' field is required" });
-    }
+async function postPosition(id_canva, position_data, section_color, section_id) {
 
-    if (!section) {
-        return res.status(400).json({ error: "The 'section' field is required" });
+    if (!id_canva) {
+        return res.status(400).json({ error: "The 'id_canva' field is required" });
     }
-
-    if (!coords) {
-        return res.status(400).json({ error: "The 'coords' field is required" });
+    if (!position_data) {
+        return res.status(400).json({ error: "The 'position_data' field is required" });
     }
-    if (!left) {
-        return res.status(400).json({ error: "The 'left' field is required" });
+    if (!section_color) {
+        return res.status(400).json({ error: "The 'section_color' field is required" });
     }
-
-    if (!top) {
-        return res.status(400).json({ error: "The 'top' field is required" });
+    if (!section_id) {
+        return res.status(400).json({ error: "The 'section_id' field is required" });
     }
 
 
     try {
-        const sql = `INSERT INTO positions (position_name, section, coords, text_left, text_top) VALUES ( ?,?,?,? ,? )`;
-        const result = await db.query(sql, [position_name, section, coords, left, top]);
+
+        const sql = `INSERT INTO positions (id_canva, position_data, section_color, section_id) VALUES (?,?,?,?)`;
+        const result = await db.query(sql, [id_canva, position_data, section_color, section_id]);
 
         return result;
     } catch (error) {
@@ -64,7 +60,31 @@ async function postPosition(position_name, section, coords, left, top) {
     }
 }
 
-async function removePosition(id) {
+async function removePosition(position_data) {
+    if (!position_data) {
+        throw new Error("The 'position_data' parameter is required");
+    }
+
+    try {
+        const sql = `DELETE FROM positions WHERE position_data = ?`
+        const result = await db.query(sql, [position_data]);
+        // console.log(sql);
+        // console.log(result);
+        return result;
+    } catch (error) {
+        // if (error.sqlState == '23000') {
+        //     const sql = `DELETE FROM sections WHERE section = ?`;
+        //     const result = await db.query(sql, [id]);
+        //     removeSponsor(id);
+        // } else {
+        // console.error(error);
+        console.error(`Error removing data from sections:`, error.message);
+        throw error;
+        // }
+    }
+}
+
+async function removePositionById(id) {
     if (!id) {
         throw new Error("The 'id' parameter is required");
     }
@@ -89,6 +109,27 @@ async function removePosition(id) {
 }
 
 
+async function updatePosition(id, position_data_new) {
+    if (!id) {
+        throw new Error("The 'id' parameter is required");
+    }
+    if (!position_data_new) {
+        throw new Error("The 'position_data_new' parameter is required");
+    }
+
+    try {
+
+        const sql = `UPDATE positions SET position_data = ? WHERE id = ?`;
+        const result = await db.query(sql, [position_data_new, id]);
+
+        return result;
+    } catch (error) {
+        console.error(`Error updating position data:`, error.message);
+        throw error; // Re-lanzar el error para que el controlador lo maneje
+    }
+}
+
+
 async function updatePositionSponsor(id, sponsor_id) {
     if (!id) {
         throw new Error("The 'id' parameter is required");
@@ -104,7 +145,7 @@ async function updatePositionSponsor(id, sponsor_id) {
 
         return result;
     } catch (error) {
-        console.error(`Error inserting sponsor into positions:`, error.message);
+        console.error(`Error updating sponsor into positions:`, error.message);
         throw error; // Re-lanzar el error para que el controlador lo maneje
     }
 }
@@ -133,6 +174,8 @@ module.exports = {
     getMultiple,
     postPosition,
     removePosition,
+    removePositionById,
+    updatePosition,
     updatePositionSponsor,
     removePositionSponsor
 }

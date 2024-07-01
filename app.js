@@ -34,6 +34,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+// Servir Fabric.js desde node_modules
+app.use('/fabric', express.static(path.join(__dirname, 'node_modules/fabric/dist')));
 
 // Aplicar autenticación básica para todas las rutas
 app.use(auth);

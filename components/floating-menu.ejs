@@ -1,110 +1,371 @@
 <style>
-    .floating-menu {
-        position: fixed;
-        top: 50%;
-        left: 0;
-        transform: translateY(-50%);
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        padding: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    #canvas {
+        border: 1px solid black;
     }
 
-    .color-box {
-        width: 30px;
-        height: 30px;
-        display: inline-block;
-        margin-right: 10px;
+    .area-controls {
+        display: flex;
+        gap: 10px;
+        margin: 10px 0;
+    }
+
+    /* Formas */
+    #shapeButtons {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 140px;
+    }
+
+    .shape-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 2px;
+        transition: background-color 0.3s;
+    }
+
+    .shape-button img {
+        width: 24px;
+        height: 24px;
+    }
+
+    .shape-button:hover {
+        background-color: #e0e0e0;
+        border-radius: 5px;
+    }
+
+    /* Colores */
+    #colorPalette {
+        display: inline-flex;
+    }
+
+    .color-picker {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 282px;
+    }
+
+    .color {
+        width: 24px;
+        height: 24px;
+        margin: 2px;
+        cursor: pointer;
+        border-radius: 5%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .color:hover {
+        transform: scale(1.1);
+    }
+
+    .color:active {
+        transform: scale(0.9);
+    }
+
+    .color:focus {
+        outline: none;
+    }
+
+    #colorSelector {
+        height: auto;
     }
 </style>
+<button id="canvaToJSON">TOJSON</button>
+<button id="canvaClear">Clear</button>
+<button id="canvaFromJSON">FROMJSON</button>
 
-
-<div class="floating-menu">
-    <ul class="list-group">
-        <% sections.forEach(section=> { %>
-            <li class="list-group-item d-flex align-items-center" onclick="showDropdown(event, <%= section.id %>)"
-                ondblclick="addSponsorToSection(<%= section.id %>)" style="cursor:pointer;">
-                <div class="color-box" style="background-color: #<%= section.color %>;"></div>
-                <span>
-                    <%= section.price %> €
-                </span>
-                <!-- Dropdown container -->
-                <div class="dropdown d-none" id="dropdown-<%= section.id %>" style="top: -23px;left: 16px;">
-                    <ul class="dropdown-menu show">
-                        <% positions.filter(pos=> pos.section === section.id &&
-                            !pos.position_parent_id).forEach(position => { %>
-                            <li>
-                                <a class="dropdown-item align-items-center d-inline-flex dropdown-item" href="#"
-                                    data-position-id="<%= position.id %>" data-position-parent-id="<%= position.position_parent_id %>"" data-childs=true
-                                    onclick="addSponsorToSection(<%= section.id %>,<%= position.id %>,true)">
-                                    <div class="color-box" style="background-color: #<%= section.color %>;"></div>
-                                    <span>Posición <%= position.id %></span>
-                                </a>
-                            </li>
-                            <% }); %>
-                    </ul>
-                </div>
-            </li>
-            <% }); %>
-    </ul>
+<div class="area-controls">
+    <button id="highlightRectanglesButton">Seleccionar Rectángulos</button>
+    <button id="unhighlightRectanglesButton">Desmarcar Rectángulos</button>
+    <div id="shapeButtons">
+        <!-- <button id="addLineButton" class="shape-button"><img src="img/icons/line.svg" alt="Línea"></button> -->
+        <button id="addOvalButton" class="shape-button"><img src="img/icons/oval.svg" alt="Óvalo"></button>
+        <button id="addRectButton" class="shape-button"><img src="img/icons/rectangle.svg" alt="Rectángulo"></button>
+        <button id="addTriangleButton" class="shape-button"><img src="img/icons/triangle.svg" alt="Triángulo"></button>
+        <button id="addDiamondButton" class="shape-button"><img src="img/icons/diamond.svg" alt="Diamante"></button>
+        <button id="addPentagonButton" class="shape-button"><img src="img/icons/pentagon.svg" alt="Pentágono"></button>
+        <button id="addHexagonButton" class="shape-button"><img src="img/icons/hexagon.svg" alt="Hexágono"></button>
+        <button id="addStarButton" class="shape-button"><img src="img/icons/star.svg" alt="Estrella"></button>
+        <button id="addArrowButton" class="shape-button"><img src="img/icons/arrow.svg" alt="Flecha"></button>
+        <button id="addSpeechBubbleButton" class="shape-button"><img src="img/icons/speech-bubble.svg"
+                alt="Bocadillo"></button>
+        <button id="addFreeDrawButton" class="shape-button"><img src="img/icons/freeform.svg" alt="Bocadillo"></button>
+    </div>
 </div>
+<%- include('color-selector') %>
 
-<script>
-    function showDropdown(event, sectionId) {
-        event.stopPropagation();
+    <script src="/js/color-selector.js"></script>
+    <script src="/fabric/fabric.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = new fabric.Canvas('canvas');
+            var canvasObject;
 
-        $('.dropdown').addClass('d-none');
 
-        const dropdown = $('#dropdown-' + sectionId);
-        if (dropdown.hasClass('d-none')) {
-            dropdown.removeClass('d-none');
-        } else {
-            dropdown.addClass('d-none');
-        }
-    }
 
-    function hilight(dataId) {
-        $('area[data-section]').mouseleave();
-        $('area[data-section="' + dataId + '"]').mouseenter();
-    }
 
-    function unhilight() {
-        $('area[data-section]').mouseleave();
-    }
+            // Cargar la imagen como fondo fijo en el lienzo
+            fabric.Image.fromURL('/img/bike.png', (img) => {
+                // Redimensionar la imagen para que se ajuste al lienzo
+                img.scaleToWidth(canvas.width);
+                img.scaleToHeight(canvas.height);
+                canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+                    scaleX: canvas.width / img.width,
+                    scaleY: canvas.height / img.height
+                });
+            });
 
-    function addSponsorToSection(sectionId,parentId = null, childs = false) {
-        // Show the modal for selecting sponsor
-        $('#sponsorModal').modal('show');
+            // Función para dibujar una forma libre
+            // function addFreeDrawShape(points) {
+            //     const freeDraw = new fabric.Path(points, {
+            //         fill: selectedColorBackground,
+            //         stroke: selectedColor,
+            //         strokeWidth: 2, // Ancho del borde
+            //         selectable: true,
+            //         hasControls: true // Mostrar controles de manipulación (rotar, escalar, etc.)
+            //     });
 
-        // Save the sectionId to use it later when saving the sponsor
-        $('#saveSponsor').data({ 'section-id': sectionId, 'childs': childs , 'parent-id': parentId });
-        $('#removeSponsor').data({ 'section-id': sectionId, 'childs': childs, 'parent-id': parentId  });
-    }
+            //     // Añadir un evento para mostrar las coordenadas de la forma cuando se deselecciona
+            //     freeDraw.on('deselected', () => {
+            //         console.log(`Forma libre deseleccionada. Puntos:`, freeDraw.path);
+            //     });
 
-    function hilightPosition(positionId) {
-        $('area[data-id="' + positionId + '"]').mouseenter();
-        $('area[data-parent-id="' + positionId + '"]').mouseenter();
-    }
+            //     canvas.add(freeDraw);
+            // }
 
-    function unhilightPosition() {
-        $('area[data-id]').mouseleave();
-        $('area[data-parent-id]').mouseleave();
-    }
+            // Botón para dibujar forma libre
+            const addFreeDrawButton = document.getElementById('addFreeDrawButton');
+            addFreeDrawButton.addEventListener('click', () => {
+                // Utiliza la herramienta de dibujo libre de Fabric.js
+                canvas.isDrawingMode = true;
+                canvas.freeDrawingBrush.width = 2;
+                canvas.freeDrawingBrush.color = selectedColor;
+            });
 
-    $(document).ready(function () {
-        // Close any open dropdowns when clicking outside of them
-        $(document).on('click', function (event) {
-            if (!$(event.target).closest('.list-group-item').length) {
-                $('.dropdown').addClass('d-none');
+            // Evento para detener el modo de dibujo libre al hacer clic en otro botón o en el lienzo
+            canvas.on('mouse:up', () => {
+                if (canvas.isDrawingMode) {
+                    canvas.isDrawingMode = false;
+                    let paths = canvas.getObjects().filter(obj => obj.type === 'path');
+                    let ultimoPath = paths.reduce((ultimo, actual) => {
+                        return (canvas.getObjects().indexOf(actual) > canvas.getObjects().indexOf(ultimo)) ? actual : ultimo;
+                    });
+                    if (ultimoPath) {
+                        ultimoPath.set({
+                            selectable: true,
+                            hasControls: true,
+                            centeredRotation: true,
+                            fill: selectedColorBackground,
+                        });
+                        // console.log(`Forma libre agregada. Puntos:`, ultimoPath.path);
+                    }
+                }
+            });
+
+
+            function addShape(shapeType) {
+                let shape;
+                switch (shapeType) {
+                    case 'line':
+                        shape = new fabric.Line([50, 100, 200, 200], {
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'oval':
+                        shape = new fabric.Ellipse({
+                            left: 100,
+                            top: 100,
+                            rx: 50,
+                            ry: 30,
+                            fill: selectedColorBackground,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'rect':
+                        shape = new fabric.Rect({
+                            left: 100,
+                            top: 100,
+                            fill: selectedColorBackground,
+                            width: 150,
+                            height: 100,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'triangle':
+                        shape = new fabric.Triangle({
+                            left: 100,
+                            top: 100,
+                            fill: selectedColorBackground,
+                            width: 100,
+                            height: 100,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'diamond':
+                        shape = new fabric.Polygon([
+                            { x: 200, y: 10 },
+                            { x: 250, y: 50 },
+                            { x: 200, y: 90 },
+                            { x: 150, y: 50 }
+                        ], {
+                            fill: selectedColorBackground,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'pentagon':
+                        shape = new fabric.Polygon([
+                            { x: 300, y: 10 },
+                            { x: 350, y: 50 },
+                            { x: 325, y: 100 },
+                            { x: 275, y: 100 },
+                            { x: 250, y: 50 }
+                        ], {
+                            fill: selectedColorBackground,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'hexagon':
+                        shape = new fabric.Polygon([
+                            { x: 300, y: 50 },
+                            { x: 350, y: 50 },
+                            { x: 375, y: 100 },
+                            { x: 350, y: 150 },
+                            { x: 300, y: 150 },
+                            { x: 275, y: 100 }
+                        ], {
+                            fill: selectedColorBackground,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'star':
+                        shape = new fabric.Polygon([
+                            { x: 50, y: 0 },
+                            { x: 60, y: 30 },
+                            { x: 100, y: 30 },
+                            { x: 70, y: 50 },
+                            { x: 80, y: 80 },
+                            { x: 50, y: 60 },
+                            { x: 20, y: 80 },
+                            { x: 30, y: 50 },
+                            { x: 0, y: 30 },
+                            { x: 40, y: 30 }
+                        ], {
+                            left: 100,
+                            top: 100,
+                            fill: selectedColorBackground,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'arrow':
+                        shape = new fabric.Polygon([
+                            { x: 0, y: 0 },
+                            { x: 100, y: 50 },
+                            { x: 0, y: 100 },
+                            { x: 20, y: 50 }
+                        ], {
+                            left: 100,
+                            top: 100,
+                            fill: selectedColorBackground,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                    case 'speechBubble':
+                        shape = new fabric.Path('M 0 0 L 200 0 Q 230 0, 230 30 L 230 70 Q 230 100, 200 100 L 100 100 L 50 130 L 75 100 L 0 100 Q -30 100, -30 70 L -30 30 Q -30 0, 0 0 z', {
+                            left: 100,
+                            top: 100,
+                            fill: selectedColorBackground,
+                            stroke: selectedColor,
+                            strokeWidth: 2
+                        });
+                        break;
+                }
+
+                // Añadir un evento para mostrar las coordenadas del área cuando se deselecciona
+                shape.on('deselected', () => {
+                    // Almacenar detalles del rectángulo para recrear
+                    console.log(`Forma deseleccionada. Nueva ubicación: Left=${shape.left}, Top=${shape.top}`);
+                });
+                canvas.add(shape);
             }
+
+            // document.getElementById('addLineButton').addEventListener('click', () => addShape('line'));
+            document.getElementById('addOvalButton').addEventListener('click', () => addShape('oval'));
+            document.getElementById('addRectButton').addEventListener('click', () => addShape('rect'));
+            document.getElementById('addTriangleButton').addEventListener('click', () => addShape('triangle'));
+            document.getElementById('addDiamondButton').addEventListener('click', () => addShape('diamond'));
+            document.getElementById('addPentagonButton').addEventListener('click', () => addShape('pentagon'));
+            document.getElementById('addHexagonButton').addEventListener('click', () => addShape('hexagon'));
+            document.getElementById('addStarButton').addEventListener('click', () => addShape('star'));
+            document.getElementById('addArrowButton').addEventListener('click', () => addShape('arrow'));
+            document.getElementById('addSpeechBubbleButton').addEventListener('click', () => addShape('speechBubble'));
+
+
+            // Evento para eliminar un objeto al presionar la tecla "Delete"
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Delete') {
+                    const activeObject = canvas.getActiveObject();
+                    if (activeObject) {
+                        canvas.remove(activeObject);
+                    }
+                }
+            });
+
+            const highlightRectanglesButton = document.getElementById('highlightRectanglesButton');
+            highlightRectanglesButton.addEventListener('click', () => {
+                const rects = canvas.getObjects().filter(obj => obj.type === 'rect');
+                rects.forEach(rect => {
+                    rect.set('fill', 'lime');
+                });
+                canvas.renderAll();
+            });
+
+            const originalColor = 'rgba(0,0,0,0)'; // Define el color original para desmarcar
+
+            // Botón para desmarcar todos los rectángulos
+            const unhighlightRectanglesButton = document.getElementById('unhighlightRectanglesButton');
+            unhighlightRectanglesButton.addEventListener('click', () => {
+                const rects = canvas.getObjects().filter(obj => obj.type === 'rect');
+                rects.forEach(rect => {
+                    rect.set('fill', originalColor);
+                });
+                canvas.renderAll();
+            });
+
+
+            $('#canvaToJSON').on('click', function () {
+                canvasObject = JSON.stringify(canvas.toObject());
+                console.log(canvas.toObject());
+                console.log(canvasObject);
+            })
+
+            $('#canvaFromJSON').on('click', function () {
+                cnvOBJ = '{"version":"5.3.0","objects":[{"type":"rect","version":"5.3.0","originX":"left","originY":"top","left":710.05,"top":25.4,"width":150,"height":100,"fill":"rgba(255, 255, 0, 0.9)","stroke":"ffff00","strokeWidth":2,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeUniform":false,"strokeMiterLimit":4,"scaleX":1.72,"scaleY":1,"angle":41.61,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"rx":0,"ry":0},{"type":"polygon","version":"5.3.0","originX":"left","originY":"top","left":385,"top":422,"width":100,"height":80,"fill":"rgba(255, 255, 0, 0.9)","stroke":"ffff00","strokeWidth":2,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeUniform":false,"strokeMiterLimit":4,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"points":[{"x":50,"y":0},{"x":60,"y":30},{"x":100,"y":30},{"x":70,"y":50},{"x":80,"y":80},{"x":50,"y":60},{"x":20,"y":80},{"x":30,"y":50},{"x":0,"y":30},{"x":40,"y":30}]},{"type":"ellipse","version":"5.3.0","originX":"left","originY":"top","left":365,"top":293,"width":100,"height":60,"fill":"rgba(255, 87, 51, 0.3)","stroke":"#FF5733","strokeWidth":2,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeUniform":false,"strokeMiterLimit":4,"scaleX":0.7,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"rx":50,"ry":30},{"type":"path","version":"5.3.0","originX":"left","originY":"top","left":574,"top":387.28,"width":90,"height":107,"fill":"rgba(255, 87, 51, 0.3)","stroke":"#FF5733","strokeWidth":2,"strokeDashArray":null,"strokeLineCap":"round","strokeDashOffset":0,"strokeLineJoin":"round","strokeUniform":false,"strokeMiterLimit":10,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"path":[["M",574.998,440.28325],["Q",575,440.28125,575.5,440.28125],["Q",576,440.28125,576.5,439.78125],["Q",577,439.28125,577.5,438.78125],["Q",578,438.28125,578.5,437.28125],["Q",579,436.28125,580,435.28125],["Q",581,434.28125,581.5,432.78125],["Q",582,431.28125,583.5,428.78125],["Q",585,426.28125,587,422.78125],["Q",589,419.28125,590,416.28125],["Q",591,413.28125,592.5,411.28125],["Q",594,409.28125,595,407.28125],["Q",596,405.28125,598.5,401.28125],["Q",601,397.28125,601.5,396.28125],["Q",602,395.28125,604,393.28125],["Q",606,391.28125,607,390.78125],["Q",608,390.28125,608.5,389.78125],["Q",609,389.28125,609.5,388.78125],["Q",610,388.28125,610.5,388.28125],["Q",611,388.28125,611.5,388.28125],["Q",612,388.28125,612.5,388.28125],["Q",613,388.28125,613.5,388.28125],["Q",614,388.28125,615,388.28125],["Q",616,388.28125,616,388.78125],["Q",616,389.28125,616.5,389.78125],["Q",617,390.28125,618,390.78125],["Q",619,391.28125,619.5,392.28125],["Q",620,393.28125,621.5,394.28125],["Q",623,395.28125,625.5,398.28125],["Q",628,401.28125,629.5,403.78125],["Q",631,406.28125,633.5,408.78125],["Q",636,411.28125,637,412.78125],["Q",638,414.28125,642,418.78125],["Q",646,423.28125,648,425.78125],["Q",650,428.28125,651,430.78125],["Q",652,433.28125,653.5,435.78125],["Q",655,438.28125,656,440.28125],["Q",657,442.28125,658,443.78125],["Q",659,445.28125,659.5,447.78125],["Q",660,450.28125,661,452.78125],["Q",662,455.28125,662.5,457.78125],["Q",663,460.28125,663.5,462.78125],["Q",664,465.28125,664,467.28125],["Q",664,469.28125,664.5,472.28125],["Q",665,475.28125,665,477.78125],["Q",665,480.28125,665,481.78125],["Q",665,483.28125,665,484.78125],["Q",665,486.28125,665,487.28125],["Q",665,488.28125,665,488.78125],["Q",665,489.28125,665,489.78125],["Q",665,490.28125,664.5,490.78125],["Q",664,491.28125,664,491.78125],["Q",664,492.28125,663.5,492.78125],["Q",663,493.28125,662.5,493.78125],["Q",662,494.28125,661.5,494.78125],["Q",661,495.28125,660,495.28125],["Q",659,495.28125,658,495.28125],["Q",657,495.28125,656,495.28125],["Q",655,495.28125,653,495.28125],["Q",651,495.28125,649,495.28125],["Q",647,495.28125,643,494.28125],["Q",639,493.28125,635,491.78125],["Q",631,490.28125,627.5,489.28125],["Q",624,488.28125,621.5,487.78125],["Q",619,487.28125,614.5,485.78125],["Q",610,484.28125,607.5,483.28125],["Q",605,482.28125,602.5,481.78125],["Q",600,481.28125,598.5,480.78125],["Q",597,480.28125,595,479.78125],["Q",593,479.28125,592,478.78125],["Q",591,478.28125,590,477.78125],["Q",589,477.28125,588.5,476.78125],["Q",588,476.28125,587,475.78125],["Q",586,475.28125,585.5,474.78125],["Q",585,474.28125,584.5,473.78125],["Q",584,473.28125,583,473.28125],["Q",582,473.28125,581.5,472.28125],["Q",581,471.28125,580,471.28125],["Q",579,471.28125,578.5,470.78125],["Q",578,470.28125,577.5,469.78125],["Q",577,469.28125,576.5,469.28125],["Q",576,469.28125,576,468.78125],["Q",576,468.28125,576,467.78125],["Q",576,467.28125,575.5,467.28125],["Q",575,467.28125,575,466.78125],["Q",575,466.28125,575,465.78125],["Q",575,465.28125,575,464.78125],["Q",575,464.28125,575,463.78125],["Q",575,463.28125,575,462.28125],["Q",575,461.28125,575.5,460.78125],["Q",576,460.28125,576.5,459.78125],["Q",577,459.28125,577,458.28125],["Q",577,457.28125,577.5,456.78125],["Q",578,456.28125,578,455.78125],["Q",578,455.28125,578,454.28125],["Q",578,453.28125,578.5,452.78125],["Q",579,452.28125,579,451.78125],["Q",579,451.28125,579,450.78125],["Q",579,450.28125,579,449.28125],["Q",579,448.28125,579,447.78125],["Q",579,447.28125,579,446.78125],["Q",579,446.28125,579,445.78125],["Q",579,445.28125,579.5,444.28125],["Q",580,443.28125,580,442.78125],["Q",580,442.28125,580,441.28125],["Q",580,440.28125,580,439.78125],["Q",580,439.28125,580,437.78125],["Q",580,436.28125,580,435.28125],["Q",580,434.28125,580,432.78125],["L",580,431.27925]]},{"type":"path","version":"5.3.0","originX":"left","originY":"top","left":255,"top":76,"width":260,"height":130,"fill":"rgba(255, 87, 51, 0.3)","stroke":"#FF5733","strokeWidth":2,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeUniform":false,"strokeMiterLimit":4,"scaleX":1,"scaleY":1,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"path":[["M",0,0],["L",200,0],["Q",230,0,230,30],["L",230,70],["Q",230,100,200,100],["L",100,100],["L",50,130],["L",75,100],["L",0,100],["Q",-30,100,-30,70],["L",-30,30],["Q",-30,0,0,0],["z"]]}],"backgroundImage":{"type":"image","version":"5.3.0","originX":"left","originY":"top","left":0,"top":0,"width":3257,"height":1415,"fill":"rgb(0,0,0)","stroke":null,"strokeWidth":0,"strokeDashArray":null,"strokeLineCap":"butt","strokeDashOffset":0,"strokeLineJoin":"miter","strokeUniform":false,"strokeMiterLimit":4,"scaleX":0.41,"scaleY":0.41,"angle":0,"flipX":false,"flipY":false,"opacity":1,"shadow":null,"visible":true,"backgroundColor":"","fillRule":"nonzero","paintFirst":"fill","globalCompositeOperation":"source-over","skewX":0,"skewY":0,"cropX":0,"cropY":0,"src":"http://localhost:5000/img/bike.png","crossOrigin":null,"filters":[]}}';
+                canvas.loadFromJSON(JSON.parse(cnvOBJ), () => {
+                    canvas.renderAll();
+
+                    console.log(canvas.item(0).name);
+                })
+            })
+
+            $('#canvaClear').on('click', function () {
+                canvas.clear();
+            })
+
+
+            var objects = {
+                "objects": [{ "type": "rect", "version": "5.3.0", "originX": "left", "originY": "top", "left": 710.05, "top": 25.4, "width": 150, "height": 100, "fill": "rgba(255, 255, 0, 0.9)", "stroke": "ffff00", "strokeWidth": 2, "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0, "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4, "scaleX": 1.72, "scaleY": 1, "angle": 41.61, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "rx": 0, "ry": 0 }, { "type": "polygon", "version": "5.3.0", "originX": "left", "originY": "top", "left": 385, "top": 422, "width": 100, "height": 80, "fill": "rgba(255, 255, 0, 0.9)", "stroke": "ffff00", "strokeWidth": 2, "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0, "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4, "scaleX": 1, "scaleY": 1, "angle": 0, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "points": [{ "x": 50, "y": 0 }, { "x": 60, "y": 30 }, { "x": 100, "y": 30 }, { "x": 70, "y": 50 }, { "x": 80, "y": 80 }, { "x": 50, "y": 60 }, { "x": 20, "y": 80 }, { "x": 30, "y": 50 }, { "x": 0, "y": 30 }, { "x": 40, "y": 30 }] }, { "type": "ellipse", "version": "5.3.0", "originX": "left", "originY": "top", "left": 365, "top": 293, "width": 100, "height": 60, "fill": "rgba(255, 87, 51, 0.3)", "stroke": "#FF5733", "strokeWidth": 2, "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0, "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4, "scaleX": 0.7, "scaleY": 1, "angle": 0, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "rx": 50, "ry": 30 }, { "type": "path", "version": "5.3.0", "originX": "left", "originY": "top", "left": 574, "top": 387.28, "width": 90, "height": 107, "fill": "rgba(255, 87, 51, 0.3)", "stroke": "#FF5733", "strokeWidth": 2, "strokeDashArray": null, "strokeLineCap": "round", "strokeDashOffset": 0, "strokeLineJoin": "round", "strokeUniform": false, "strokeMiterLimit": 10, "scaleX": 1, "scaleY": 1, "angle": 0, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "path": [["M", 574.998, 440.28325], ["Q", 575, 440.28125, 575.5, 440.28125], ["Q", 576, 440.28125, 576.5, 439.78125], ["Q", 577, 439.28125, 577.5, 438.78125], ["Q", 578, 438.28125, 578.5, 437.28125], ["Q", 579, 436.28125, 580, 435.28125], ["Q", 581, 434.28125, 581.5, 432.78125], ["Q", 582, 431.28125, 583.5, 428.78125], ["Q", 585, 426.28125, 587, 422.78125], ["Q", 589, 419.28125, 590, 416.28125], ["Q", 591, 413.28125, 592.5, 411.28125], ["Q", 594, 409.28125, 595, 407.28125], ["Q", 596, 405.28125, 598.5, 401.28125], ["Q", 601, 397.28125, 601.5, 396.28125], ["Q", 602, 395.28125, 604, 393.28125], ["Q", 606, 391.28125, 607, 390.78125], ["Q", 608, 390.28125, 608.5, 389.78125], ["Q", 609, 389.28125, 609.5, 388.78125], ["Q", 610, 388.28125, 610.5, 388.28125], ["Q", 611, 388.28125, 611.5, 388.28125], ["Q", 612, 388.28125, 612.5, 388.28125], ["Q", 613, 388.28125, 613.5, 388.28125], ["Q", 614, 388.28125, 615, 388.28125], ["Q", 616, 388.28125, 616, 388.78125], ["Q", 616, 389.28125, 616.5, 389.78125], ["Q", 617, 390.28125, 618, 390.78125], ["Q", 619, 391.28125, 619.5, 392.28125], ["Q", 620, 393.28125, 621.5, 394.28125], ["Q", 623, 395.28125, 625.5, 398.28125], ["Q", 628, 401.28125, 629.5, 403.78125], ["Q", 631, 406.28125, 633.5, 408.78125], ["Q", 636, 411.28125, 637, 412.78125], ["Q", 638, 414.28125, 642, 418.78125], ["Q", 646, 423.28125, 648, 425.78125], ["Q", 650, 428.28125, 651, 430.78125], ["Q", 652, 433.28125, 653.5, 435.78125], ["Q", 655, 438.28125, 656, 440.28125], ["Q", 657, 442.28125, 658, 443.78125], ["Q", 659, 445.28125, 659.5, 447.78125], ["Q", 660, 450.28125, 661, 452.78125], ["Q", 662, 455.28125, 662.5, 457.78125], ["Q", 663, 460.28125, 663.5, 462.78125], ["Q", 664, 465.28125, 664, 467.28125], ["Q", 664, 469.28125, 664.5, 472.28125], ["Q", 665, 475.28125, 665, 477.78125], ["Q", 665, 480.28125, 665, 481.78125], ["Q", 665, 483.28125, 665, 484.78125], ["Q", 665, 486.28125, 665, 487.28125], ["Q", 665, 488.28125, 665, 488.78125], ["Q", 665, 489.28125, 665, 489.78125], ["Q", 665, 490.28125, 664.5, 490.78125], ["Q", 664, 491.28125, 664, 491.78125], ["Q", 664, 492.28125, 663.5, 492.78125], ["Q", 663, 493.28125, 662.5, 493.78125], ["Q", 662, 494.28125, 661.5, 494.78125], ["Q", 661, 495.28125, 660, 495.28125], ["Q", 659, 495.28125, 658, 495.28125], ["Q", 657, 495.28125, 656, 495.28125], ["Q", 655, 495.28125, 653, 495.28125], ["Q", 651, 495.28125, 649, 495.28125], ["Q", 647, 495.28125, 643, 494.28125], ["Q", 639, 493.28125, 635, 491.78125], ["Q", 631, 490.28125, 627.5, 489.28125], ["Q", 624, 488.28125, 621.5, 487.78125], ["Q", 619, 487.28125, 614.5, 485.78125], ["Q", 610, 484.28125, 607.5, 483.28125], ["Q", 605, 482.28125, 602.5, 481.78125], ["Q", 600, 481.28125, 598.5, 480.78125], ["Q", 597, 480.28125, 595, 479.78125], ["Q", 593, 479.28125, 592, 478.78125], ["Q", 591, 478.28125, 590, 477.78125], ["Q", 589, 477.28125, 588.5, 476.78125], ["Q", 588, 476.28125, 587, 475.78125], ["Q", 586, 475.28125, 585.5, 474.78125], ["Q", 585, 474.28125, 584.5, 473.78125], ["Q", 584, 473.28125, 583, 473.28125], ["Q", 582, 473.28125, 581.5, 472.28125], ["Q", 581, 471.28125, 580, 471.28125], ["Q", 579, 471.28125, 578.5, 470.78125], ["Q", 578, 470.28125, 577.5, 469.78125], ["Q", 577, 469.28125, 576.5, 469.28125], ["Q", 576, 469.28125, 576, 468.78125], ["Q", 576, 468.28125, 576, 467.78125], ["Q", 576, 467.28125, 575.5, 467.28125], ["Q", 575, 467.28125, 575, 466.78125], ["Q", 575, 466.28125, 575, 465.78125], ["Q", 575, 465.28125, 575, 464.78125], ["Q", 575, 464.28125, 575, 463.78125], ["Q", 575, 463.28125, 575, 462.28125], ["Q", 575, 461.28125, 575.5, 460.78125], ["Q", 576, 460.28125, 576.5, 459.78125], ["Q", 577, 459.28125, 577, 458.28125], ["Q", 577, 457.28125, 577.5, 456.78125], ["Q", 578, 456.28125, 578, 455.78125], ["Q", 578, 455.28125, 578, 454.28125], ["Q", 578, 453.28125, 578.5, 452.78125], ["Q", 579, 452.28125, 579, 451.78125], ["Q", 579, 451.28125, 579, 450.78125], ["Q", 579, 450.28125, 579, 449.28125], ["Q", 579, 448.28125, 579, 447.78125], ["Q", 579, 447.28125, 579, 446.78125], ["Q", 579, 446.28125, 579, 445.78125], ["Q", 579, 445.28125, 579.5, 444.28125], ["Q", 580, 443.28125, 580, 442.78125], ["Q", 580, 442.28125, 580, 441.28125], ["Q", 580, 440.28125, 580, 439.78125], ["Q", 580, 439.28125, 580, 437.78125], ["Q", 580, 436.28125, 580, 435.28125], ["Q", 580, 434.28125, 580, 432.78125], ["L", 580, 431.27925]] }, { "type": "path", "version": "5.3.0", "originX": "left", "originY": "top", "left": 255, "top": 76, "width": 260, "height": 130, "fill": "rgba(255, 87, 51, 0.3)", "stroke": "#FF5733", "strokeWidth": 2, "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0, "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4, "scaleX": 1, "scaleY": 1, "angle": 0, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "path": [["M", 0, 0], ["L", 200, 0], ["Q", 230, 0, 230, 30], ["L", 230, 70], ["Q", 230, 100, 200, 100], ["L", 100, 100], ["L", 50, 130], ["L", 75, 100], ["L", 0, 100], ["Q", -30, 100, -30, 70], ["L", -30, 30], ["Q", -30, 0, 0, 0], ["z"]] }]
+            }
+
+
         });
 
-        // Hover effect for dropdown items
-        $('.dropdown-item').on('mouseenter', function () {
-            const positionId = $(this).data('position-id');
-            hilightPosition(positionId);
-        }).on('mouseleave', function () {
-            unhilightPosition();
-        });
-    });
-</script>
+    </script>

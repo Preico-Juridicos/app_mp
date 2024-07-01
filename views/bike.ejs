@@ -12,6 +12,7 @@
 
     <div class="legend">
         <%- include('../components/floating-menuv2') %>
+
     </div>
 
     <!-- Modal para seleccionar patrocinador -->
@@ -45,13 +46,31 @@
     <script>
         const canvas = new fabric.Canvas('<%= canvas.name %>-<%= canvas.id %>');
         const canvaID = '<%= canvas.id %>';
+        const routeType = '<%= type %>';
         $(document).ready(function () {
             const canvaData = JSON.parse('<%= canvas.canvaData %>'.replace(/&#34;/g, '"'));
             //console.log(canvaData);
             canvas.loadFromJSON(canvaData, () => {
+
+                var posi = JSON.parse('<%- JSON.stringify(positions).replace(/\\/g, '\\\\') %>');
+
+                var canvaObjects = []
+                posi.forEach(position => {
+                    // Parsear position_data dentro de cada objeto position
+                    position.position_data = JSON.parse(position.position_data);
+                    position.position_data.id = position.id;
+                    canvaObjects.push(position.position_data);
+                });
+
+                fabric.util.enlivenObjects(canvaObjects, function (objects) {
+                    objects.forEach(function (o) {
+                        console.log(o)
+                        canvas.add(o);
+                    });
+                });
                 canvas.renderAll();
-                <!-- //console.log(canvas.item(0).name); -->
-                //console.log(canvaID);
+
+
             })
 
 
@@ -83,33 +102,34 @@
                 }
             });
 
+            var objSelected = {};
+            canvas.on('selection:created', (e) => {
+                if (e.selected && e.selected.length == 1) {
+                    objSelected = JSON.stringify(e.selected[0]);
+                }
+            });
+
             canvas.on('selection:cleared', (e) => {
-                if (e.deselected) {
-                    canvasObject = JSON.stringify(canvas.toObject());
-                    //console.log(canvas.toObject());
-                    //console.log(canvasObject);
-
-
+                if (e.deselected && e.deselected.length == 1) {
+                    position_id = e.deselected[0].id;
                     $.ajax({
-                        url: '/update-canvadata',
+                        url: '/update-position',
                         method: 'POST',
                         data: {
-                            id: canvaID,
-                            data: canvasObject,
+                            id: position_id,
+                            position_data_new: JSON.stringify(e.deselected[0]),
                         },
                         success: function (response) {
-                            //location.reload();
+                            //console.log(JSON.stringify(e.deselected[0]));
+                            objSelected = {}
                         },
                         error: function (error) {
-                            console.error("Error al actualizar el canva " + canvaID, error);
+                            console.error("Error al modificar el objeto " + position_id + " del canva " + canvaID, error);
                         }
                     });
 
                 }
             });
-
-
-
 
             // Evento para eliminar un objeto al presionar la tecla "Delete"
             $(document).on('keydown', (e) => {
@@ -117,65 +137,23 @@
                     const activeObject = canvas.getActiveObject();
                     if (activeObject) {
                         canvas.remove(activeObject);
-                        color = rgbaToHex(activeObject.get('fill'),false).slice(1);
-                        console.log(rgbaToHex(color,false).slice(1));
-                        canvasObject = JSON.stringify(canvas.toObject());
-
-
+                        //console.log(activeObject.id);
                         $.ajax({
-                            url: '/update-canvadata',
+                            url: '/remove-position-id',
                             method: 'POST',
                             data: {
-                                id: canvaID,
-                                data: canvasObject,
+                                id: activeObject.id,
                             },
                             success: function (response) {
                                 //location.reload();
                             },
                             error: function (error) {
-                                console.error("Error al actualizar el canva " + canvaID, error);
+                                console.error("Error al eliminar el objeto del canva " + canvaID, error);
                             }
                         });
-                       // $.ajax({
-                       //     url: '/remove-position',
-                       //     method: 'POST',
-                       //     data: {
-                       //         id_canva: canvaID,
-                       //         id_position: canvaID+'-'+color,
-                       //         section_color: color,
-                       //     },
-                       //     success: function (response) {
-                       //         //location.reload();
-                       //     },
-                       //     error: function (error) {
-                       //         console.error("Error al actualizar el canva " + canvaID, error);
-                       //     }
-                       // });
                     }
                 }
             });
-
-
-
-
-
-            // $('#canvaToJSON').on('click', function () {
-            //     canvasObject = JSON.stringify(canvas.toObject());
-            //     console.log(canvas.toObject());
-            //     console.log(canvasObject);
-            // })
-            //
-            // $('#canvaFromJSON').on('click', function () {
-            //     canvas.loadFromJSON(canvasObject, () => {
-            //         canvas.renderAll();
-            //
-            //         console.log(canvas.item(0).name);
-            //     })
-            // })
-            //
-            // $('#canvaClear').on('click', function () {
-            //     canvas.clear();
-            // })
         });
 
 
@@ -188,6 +166,8 @@
 
         function addShape(shapeType, color, bgcolor) {
             let shape;
+            let sectionID = $('#shapeSelector').data('section');
+
             switch (shapeType) {
                 case 'line':
                     shape = new fabric.Line([50, 100, 200, 200], {
@@ -313,72 +293,27 @@
                     break;
             }
 
-            // Añadir un evento para mostrar las coordenadas del área cuando se deselecciona
-            //shape.on('deselected', () => {
-            //    // Almacenar detalles del rectángulo para recrear
-            //    //console.log(`Forma deseleccionada. Nueva ubicación: Left=${shape.left}, Top=${shape.top}`);
-            //    canvasObject = JSON.stringify(canvas.toObject());
-            //    console.log(canvas.toObject());
-            //    console.log(canvasObject);
-            //
-            //
-            //    $.ajax({
-            //        url: '/update-canvadata',
-            //        method: 'POST',
-            //        data: {
-            //            id: canvaID,
-            //            data: canvasObject,
-            //        },
-            //        success: function (response) {
-            //            //location.reload();
-            //        },
-            //        error: function (error) {
-            //            console.error("Error al actualizar el canva " + canvaID, error);
-            //        }
-            //    });
-            //
-            //});
 
-
-            //shape.set('originalColor', {
-            //    fill: shape.get('fill')
-            //});
-            //shape.addClass('test');
             canvas.add(shape);
-            console.log(color)
-            console.log(bgcolor)
 
 
 
             $.ajax({
-                url: '/update-canvadata',
+                url: '/add-position',
                 method: 'POST',
                 data: {
-                    id: canvaID,
-                    data: JSON.stringify(canvas.toObject()),
+                    id_canva: canvaID,
+                    position_data: JSON.stringify(shape),
+                    section_color: color,
+                    section_id: sectionID,
                 },
                 success: function (response) {
-                    //location.reload();
+                    location.reload();
                 },
                 error: function (error) {
-                    console.error("Error al actualizar el canva " + canvaID, error);
+                    console.error("Error al añadir el canva " + canvaID, error);
                 }
             });
-            //$.ajax({
-            //    url: '/add-position',
-            //    method: 'POST',
-            //    data: {
-            //        id_canva: canvaID,
-            //        id_position: canvaID+'-'+color,
-            //        section_color: color,
-            //    },
-            //    success: function (response) {
-            //        //location.reload();
-            //    },
-            //    error: function (error) {
-            //        console.error("Error al actualizar el canva " + canvaID, error);
-            //    }
-            //});
         }
     </script>
 

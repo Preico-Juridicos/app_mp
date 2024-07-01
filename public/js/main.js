@@ -355,17 +355,28 @@ $(document).ready(function () {
 
 
 
-function showDropdown(event, sectionId) {
-    event.stopPropagation();
+function showDropdown(sectionId = -999) {
+    $('.dropdown').each((i, drop) => {
+        if ($(drop).attr('id') == 'dropdown-' + sectionId) {
+            if (!$(drop).hasClass('show')) {
+                $(drop).dropdown('toggle');
+            }
+        } else {
 
-    $('.dropdown').addClass('d-none');
+            if ($(drop).hasClass('show')) {
+                $(drop).dropdown('toggle');
+            }
+        }
+    })
 
-    const dropdown = $('#dropdown-' + sectionId);
-    if (dropdown.hasClass('d-none')) {
-        dropdown.removeClass('d-none');
-    } else {
-        dropdown.addClass('d-none');
-    }
+    // $('.dropdown').addClass('d-none');
+
+    // const dropdown = $('#dropdown-' + sectionId);
+    // if (dropdown.hasClass('d-none')) {
+    //     dropdown.removeClass('d-none');
+    // } else {
+    //     dropdown.addClass('d-none');
+    // }
 }
 
 function hilight(dataId) {

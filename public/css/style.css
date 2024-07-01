@@ -1,3 +1,6 @@
+
+
+
 /* Estilos para la vista de la moto y la leyenda */
 .moto-view {
     position: relative;
@@ -76,4 +79,77 @@
 .maphilighted area:hover {
     stroke-width: 2;
     stroke: black;
+}
+
+
+
+
+
+
+
+
+/* Componente de color-selector */
+/* Formas */
+#shapeButtons {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 140px;
+}
+
+.shape-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    transition: background-color 0.3s;
+}
+
+.shape-button img {
+    width: 24px;
+    height: 24px;
+}
+
+.shape-button:hover {
+    background-color: #e0e0e0;
+    border-radius: 5px;
+}
+
+/* Colores */
+#colorPalette {
+    display: inline-flex;
+}
+
+.color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 282px;
+}
+
+.color {
+    width: 24px;
+    height: 24px;
+    margin: 2px;
+    cursor: pointer;
+    border-radius: 5%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.color:hover {
+    transform: scale(1.1);
+}
+
+.color:active {
+    transform: scale(0.9);
+}
+
+.color:focus {
+    outline: none;
+}
+
+#colorSelector {
+    height: auto;
+}
+
+.selected-color {
+    border: 2px solid #b4ff57;
 }

@@ -33,6 +33,7 @@
     }
 </style>
 
+
 <div class="floating-menu">
     <div class="menu-header d-flex align-items-center justify-content-between">
         <h5>Patrocinadores</h5>
@@ -44,8 +45,8 @@
     </div>
     <ul class="list-group" id="sponsorList" data-type="<%= type %>">
         <% sections.forEach(section=> { %>
-            <li class="list-group-item d-flex align-items-center" onclick="showDropdown(<%= section.id %>)"
-                ondblclick="addSponsorToSection(<%= section.id %>)" style="cursor:pointer;" data-toggle="dropdown">
+            <li class="list-group-item d-flex align-items-center" onclick="showDropdown(event, <%= section.id %>)"
+                ondblclick="addSponsorToSection(<%= section.id %>)" style="cursor:pointer;">
                 <div class="color-box" style="background-color: #<%= section.color %>;"></div>
                 <span>
                     <%= section.price %> €
@@ -53,64 +54,53 @@
                 <button class="btn btn-danger btn-sm mx-2" onclick="removeSection('<%= section.id %>')"><i
                         class='fas fa-x' style='font-size:20px'></i></button>
                 <!-- Dropdown container -->
-                <div class="dropdown" id="dropdown-<%= section.id %>" data-id="<%= section.id %>"
-                    style="top: -23px;left: 16px;" aria-expanded="false">
-
-                    <ul class="dropdown-menu">
+                <div class="dropdown d-none" id="dropdown-<%= section.id %>" data-id="<%= section.id %>"
+                    style="top: -23px;left: 16px;">
+                    <ul class="dropdown-menu show">
                         <li class="align-items-center d-flex">
-                            <i class='fas fa-square-check mx-2' style='font-size:20px'
-                                onclick="highlightAllPositionsBySectionId('<%= section.id %>')"></i>
+                            <i class='fas fa-square-check mx-4' style='font-size:20px'
+                                onclick="selectAllPositionsById('<%= section.id %>')"></i>
                             <a class="dropdown-item align-items-center d-inline-flex dropdown-item" href="#"
-                                data-section="<%= section.id %>"
-                                onclick="addTempPositionItem('<%= section.id %>','<%= section.color %>')">
+                                data-section="<%= section.id %>" onclick="addTempPositionItem('<%= section.id %>')">
                                 <span class="mx-2">Añadir Posción</span>
                                 <i class='fas fa-plus' style='font-size:20px'></i>
                             </a>
-                            <!-- <i class='fas fa-rotate-right mx-2' style='font-size:20px'
-                                onclick="reloadAllObjectsList()"></i> -->
                         </li>
-                        <% positions.filter(pos=> pos.section_id === section.id).forEach(position => { %>
+                        <% positions.filter(pos=> pos.section === section.id &&
+                            !pos.position_parent_id).forEach(position => { %>
                             <li class="d-flex">
                                 <a class="dropdown-item align-items-center d-inline-flex dropdown-item" href="#"
                                     data-position-id="<%= position.id %>"
                                     data-position-parent-id="<%= position.position_parent_id %>"" data-childs=true
-                                    onclick=" handleObjectClick(<%=position.id %>,'<%= position.section_color %>');"
-                                        ondblclick=" addSponsorToSection(<%=section.id %>,<%= position.id %>,true)">
-                                                <div class="color-box" style="background-color: #<%= section.color %>;">
-                                                </div>
-                                                <% if(position.sponsor_id !==null){ %>
-                                                    <% const sponsor=sponsors.find(sponsor=> sponsor.id ===
-                                                        position.sponsor_id); %>
-                                                        <% if (sponsor) { %>
-                                                            <span>
-                                                                <%= sponsor.name %>
-                                                            </span>
-                                                            <% } else { %>
-                                                                <span>Sponsor no encontrado para el ID <%=
-                                                                        position.sponsor_id %></span>
-                                                                <% } %>
-                                                                    <%} else { %>
-                                                                        <span>Posición <%= position.id %></span>
-                                                                        <%} %>
+                                    onclick=" addSponsorToSection(<%=section.id %>,<%= position.id %>,true)">
+                                        <div class="color-box" style="background-color: #<%= section.color %>;"></div>
+                                        <% if(position.sponsor_id !==null){ %>
+                                            <% const sponsor=sponsors.find(sponsor=> sponsor.id ===
+                                                position.sponsor_id); %>
+                                                <% if (sponsor) { %>
+                                                    <span>
+                                                        <%= sponsor.name %>
+                                                    </span>
+                                                    <% } else { %>
+                                                        <span>Sponsor no encontrado para el ID <%= position.sponsor_id
+                                                                %></span>
+                                                        <% } %>
+                                                            <%} else { %>
+                                                                <span>Posición <%= position.id %></span>
+                                                                <%} %>
                                 </a>
-                                <i class='fas fa-x mx-2 align-content-around text-danger' style='font-size:20px'
-                                    onclick="removePosition('<%= position.id %>')"></i>
+                                <button class="btn btn-danger btn-sm mx-2"
+                                    onclick="removePosition('<%= position.id %>')"><i class='fas fa-x'
+                                        style='font-size:20px'></i></button>
                                 <!-- <button class="btn btn-danger btn-sm mx-0" onclick="removePosition('<%= position.id %>')"><i
-                                                    class='fas fa-x' style='font-size:20px'></i></button> -->
+                                        class='fas fa-x' style='font-size:20px'></i></button> -->
                             </li>
                             <% }); %>
-
-                                <div id="canvas-list-<%= section.id %>">
-                                </div>
                     </ul>
                 </div>
             </li>
-
-
             <% }); %>
     </ul>
-
-
 </div>
 
 
@@ -127,6 +117,7 @@
         </div>
     </div>
 </div>
+
 <script src="/js/color-selector.js"></script>
 <script>
 
@@ -192,7 +183,7 @@
                             <button class="btn btn-success btn-sm mx-3" onclick="saveNewSponsor()"><i class="fas fa-check" style="font-size:20px"></i></button>
                         </div>
                         <div class="">
-                            <button class="btn btn-danger btn-sm mx-0" onclick="removeTempItem(this)"><i class="fas fa-x" style="font-size:20px"></i></button>
+                            <button class="btn btn-danger btn-sm mx-0" onclick="removeTempSponsorItem(this)"><i class="fas fa-x" style="font-size:20px"></i></button>
                         </div>
                     </div>
                 `
@@ -220,7 +211,7 @@
         }
 
     }
-    function removeTempItem(button) {
+    function removeTempSponsorItem(button) {
         var tempItem = button.closest('li');
         tempItem.remove();
     }
@@ -262,52 +253,7 @@
     let currentSectionId = null;
     var currentPositionName = null;
 
-    function addTempPositionItem(sectionId, sectionColor) {
-        if (!$('#tempPositionShape').length) {
-            var tempItem = $('<li>', {
-                id: 'tempPositionShape',
-                class: 'list-group-item d-flex align-items-center flex-column',
-                html:
-                    `
-                     <div class="align-items-center d-flex">
-                       <%- include("shape-selector") %>
-                        <div id="shapeSelector" data-color="${sectionColor}" data-section="${sectionId}" class="d-flex flex-column">
-                            <i class="fas fa-x mx-2 align-content-around text-danger" style="font-size:20px" onclick="removeTempItem(this)"></i>
-                        </div>
-                    </div>`
-            });
-            //console.log($('#dropdown-' + sectionId + ' > ul > li'));
-            const dropdown = $('#dropdown-' + sectionId);
-            $($('#dropdown-' + sectionId + ' > ul > li')[0]).after(tempItem);
-
-
-            $('#addFreeDrawButton').off('click');
-            $('#addFreeDrawButton').on('click', () => (addFreeShape(sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addOvalButton').off('click');
-            $('#addOvalButton').on('click', () => (addShape('oval', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addRectButton').off('click');
-            $('#addRectButton').on('click', () => (addShape('rect', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addTriangleButton').off('click');
-            $('#addTriangleButton').on('click', () => (addShape('triangle', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addDiamondButton').off('click');
-            $('#addDiamondButton').on('click', () => (addShape('diamond', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addPentagonButton').off('click');
-            $('#addPentagonButton').on('click', () => (addShape('pentagon', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addHexagonButton').off('click');
-            $('#addHexagonButton').on('click', () => (addShape('hexagon', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addStarButton').off('click');
-            $('#addStarButton').on('click', () => (addShape('star', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addArrowButton').off('click');
-            $('#addArrowButton').on('click', () => (addShape('arrow', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-            $('#addSpeechBubbleButton').off('click');
-            $('#addSpeechBubbleButton').on('click', () => (addShape('speechBubble', sectionColor, hexToRGBA(sectionColor, 0.9)), $('#tempPositionShape').remove(), $(".dropdown.show").removeClass("show")));
-
-
-        }
-
-    }
-
-    function addTempPositionItemOld(sectionId) {
+    function addTempPositionItem(sectionId) {
         $('#addPositionModal').modal('show');
         $('body').css({
             overflow: 'auto',
@@ -349,21 +295,24 @@
         //console.log(currentSectionId);
         //console.log(currentPositionName);
 
-        //$.ajax({
-        //    url: '/add-position',
-        //    method: 'POST',
-        //    data: {
-        //        id_canva: ,
-        //        position_data: ,
-        //        section_color:
-        //    },
-        //    success: function (response) {
-        //        location.reload();
-        //    },
-        //    error: function (error) {
-        //        console.error("Error al añadir posicion", error);
-        //    }
-        //});
+        $.ajax({
+            url: '/add-position',
+            method: 'POST',
+            data: {
+                position_name: currentPositionName,
+                section: currentSectionId,
+                coords: points.join(','),
+                left: textLeft,
+                top: textTop
+
+            },
+            success: function (response) {
+                location.reload();
+            },
+            error: function (error) {
+                console.error("Error al añadir posicion", error);
+            }
+        });
     }
     function removePosition(id) {
         if (!id) {
@@ -371,13 +320,11 @@
         }
 
         $.ajax({
-            url: '/remove-position-id',
+            url: '/remove-position',
             method: 'POST',
             data: { id: id },
             success: function (response) {
                 location.reload();
-                //var obj = canvas.getObjects().find((e) => e.id === id);
-                //canvas.remove(obj);
             },
             error: function (error) {
                 console.error('Error al eliminar la posicion', error);
@@ -386,43 +333,13 @@
     }
 
 
-    function highlightAllPositionsBySectionId(sectionId) {
+    function selectAllPositionsById(sectionId) {
         //console.log($('#dropdown-' + sectionId));
-        $('#dropdown-' + sectionId + ' .dropdown-item').trigger('click');
-        $('#tempPositionShape').remove()
-        //$('.dropdown').addClass('d-none');
+        $('#dropdown-' + sectionId + ' .dropdown-item').trigger('mouseenter');
+        $('.dropdown').addClass('d-none');
         //console.log($('.dropdown[data-id="'+sectionId+'"] li'));
     }
-    function highlightPositionsById(positionId) {
-        //console.log($('#dropdown-' + sectionId));
-        $('#dropdown-' + positionId + ' .dropdown-item').trigger('click');
-        //$('.dropdown').addClass('d-none');
-        //console.log($('.dropdown[data-id="'+sectionId+'"] li'));
-    }
-    function handleObjectClick(id, color) {
-        var objid = canvas.getObjects().findIndex((e) => e.id === id);
-        const obj = canvas.item(objid);
-        const render = canvas.renderAll.bind(canvas);
 
-        if (!obj.brilloIntervalo) {
-            var intervalo = setInterval(function () {
-                color = obj.fill;
-                obj.animate('fill', 'lime', {
-                    duration: 200,
-                    onChange: render,
-                    onComplete: function () {
-                        obj.animate('fill', color, {
-                            duration: 200,
-                            onChange: render
-                        });
-                    }
-                });
-            }, 300 * 2);
-            obj.brilloIntervalo = intervalo;
-            //obj.set('fill', 'lime');
-            canvas.renderAll();
-        }
-    }
 
 
 
@@ -430,11 +347,7 @@
         // Close any open dropdowns when clicking outside of them
         $(document).on('click', function (event) {
             if (!$(event.target).closest('.list-group-item').length) {
-                $('.dropdown').each((i, drop) => {
-                    if ($(drop).hasClass('show')) {
-                        $(drop).dropdown('toggle');
-                    }
-                })
+                $('.dropdown').addClass('d-none');
             }
         });
 
@@ -490,7 +403,6 @@
 
 
     });
-
 </script>
 
 
